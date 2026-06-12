@@ -1,0 +1,588 @@
+@page "/"
+@using System.Threading
+@using BlazorPortfolio.Models
+@implements IDisposable
+
+<PageTitle>个人简历（Blazor Server）</PageTitle>
+
+<!-- Header sticky nav -->
+<nav class="bg-[#051424]/80 backdrop-blur-xl border-b border-slate-800/40 sticky top-0 z-50 transition-all duration-300">
+    <div class="flex justify-between items-center w-full px-6 max-w-7xl mx-auto h-20">
+        <!-- Logo -->
+        <div class="font-mono text-lg font-bold tracking-tighter text-[#bec6e0] cursor-pointer hover:text-white transition-colors flex items-center gap-2">
+            <span class="w-2.5 h-2.5 bg-[#4fdbc8] rounded-full animate-pulse"></span>
+           (Blazor Server)
+        </div>
+
+        <!-- Links -->
+        <div class="hidden md:flex items-center gap-8">
+            <a href="#experience" class="font-mono text-xs uppercase tracking-widest text-[#c6c6cd] hover:text-[#bec6e0] transition-colors">
+                工作经历
+            </a>
+            <a href="#projects" class="font-mono text-xs uppercase tracking-widest text-[#c6c6cd] hover:text-[#bec6e0] transition-colors">
+                项目经历
+            </a>
+            <a href="#skills" class="font-mono text-xs uppercase tracking-widest text-[#c6c6cd] hover:text-[#bec6e0] transition-colors">
+                技术栈
+            </a>
+            <a href="#contact" class="font-mono text-xs uppercase tracking-widest text-[#c6c6cd] hover:text-[#bec6e0] transition-colors">
+                联系方式
+            </a>
+        </div>
+
+        <!-- Download CTA -->
+        <div>
+            @* <button @onclick="ToggleResumeModal"
+                class="bg-[#bec6e0] text-[#283044] hover:bg-white px-5 py-2.5 rounded-lg font-mono font-bold text-xs uppercase tracking-wider transition-all duration-150 active:scale-95 flex items-center gap-2 cursor-pointer">
+                <span class="material-symbols-outlined text-sm">download</span>
+                Download CV
+            </button> *@
+        </div>
+    </div>
+</nav>
+
+<!-- Hero Section -->
+<header class="relative overflow-hidden min-h-[600px] flex items-center justify-center py-16">
+    <div class="absolute inset-0 bg-[#051424]">
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[radial-gradient(#1e293b_1.5px,transparent_1.5px)] [background-size:24px_24px] opacity-15"></div>
+    </div>
+
+    <div class="relative z-10 max-w-7xl px-6 text-center space-y-6">
+        <div class="inline-flex items-center gap-2 py-1 px-3 bg-[#4fdbc8]/10 border border-[#4fdbc8]/20 text-[#4fdbc8] font-mono text-xs rounded-full">
+            <span class="w-1.5 h-1.5 bg-[#4fdbc8] rounded-full animate-ping"></span>
+            .NET Core 8 Blazor Server Active
+        </div>
+
+        <h1 class="text-4xl sm:text-5xl md:text-6xl font-black leading-tight tracking-tight text-white max-w-5xl mx-auto">
+            全栈开发工程师 <br />
+            <span class="bg-gradient-to-r from-[#bec6e0] via-[#adc6ff] to-[#4fdbc8] bg-clip-text text-transparent">
+                专注制造业数字化系统研发
+            </span>
+        </h1>
+
+        <p class="max-w-3xl mx-auto text-sm sm:text-base md:text-lg text-[#c6c6cd] leading-relaxed">
+            深耕企业级高质量并发系统、复杂工业物联网（IoT）集成环境及高可用多租户 SaaS 分布式架构设计。
+            已在 Blazor Server 强交互模式下重塑，以提供后端直跑驱动级高还原度微服务展示方案。
+        </p>
+
+        <div class="flex flex-wrap gap-4 justify-center pt-2">
+            <a href="#projects"
+                class="bg-[#adc6ff] text-[#002e6a] hover:bg-white px-8 py-3.5 rounded-lg font-mono font-bold text-xs uppercase tracking-widest transition-all duration-150 active:scale-95 shadow-lg shadow-blue-500/10 flex items-center gap-1.5">
+                查看核心项目 Projects
+            </a>
+            <a href="#contact"
+                class="border border-[#909097]/40 text-[#d4e4fa] hover:bg-slate-800/40 px-8 py-3.5 rounded-lg font-mono font-bold text-xs uppercase tracking-widest transition-all duration-150 active:scale-95 flex items-center gap-1.5">
+                联系合作 Handshake
+            </a>
+        </div>
+
+        <div class="pt-8 max-w-2xl mx-auto">
+            <div class="text-[10px] text-slate-500 font-mono flex items-center justify-center gap-1.5">
+                <span class="material-symbols-outlined text-[12px] text-[#3b82f6]">cpu</span>
+                BLAZOR SIGNALR TELEMETRY: @telemetryHz HZ • HIGHLY INTERACTIVE SIGNAL STATE
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="max-w-7xl mx-auto px-6 pb-20 space-y-24">
+
+    <!-- Advantages Grid -->
+    <section>
+        <div class="flex items-center gap-4 mb-8">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-[#4fdbc8] text-xl">award_star</span>
+                <h2 class="text-3xl font-bold text-white tracking-tight">个人优势</h2>
+            </div>
+            <div class="h-[1px] flex-grow bg-gradient-to-r from-slate-800 to-transparent"></div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            @foreach (var adv in PortfolioDataStore.Advantages)
+            {
+                <div class="glass-card p-6 rounded-xl relative overflow-hidden group cursor-pointer transition-all">
+                    <span class="font-mono text-[#4fdbc8] text-3xl font-extrabold opacity-40 block mb-4">
+                        @adv.Num
+                    </span>
+                    <h3 class="text-lg font-bold text-white mb-2">
+                        @adv.Title
+                    </h3>
+                    <p class="text-[#c6c6cd] text-sm leading-relaxed">
+                        @adv.Desc
+                    </p>
+                    <div class="absolute bottom-0 left-0 h-[2px] bg-gradient-to-r from-[#3b82f6] to-[#4fdbc8] w-0 group-hover:w-full transition-all duration-300"></div>
+                </div>
+            }
+        </div>
+    </section>
+
+    <!-- Tech Stack Diagnostic Console -->
+    <section id="skills">
+        <div class="flex items-center gap-4 mb-8">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-[#4fdbc8] text-xl">terminal</span>
+                <h2 class="text-3xl font-bold text-white tracking-tight">技术栈</h2>
+            </div>
+            <div class="h-[1px] flex-grow bg-gradient-to-r from-slate-800 to-transparent"></div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <!-- Left Grid Categories -->
+            <div class="lg:col-span-7 space-y-6">
+                @foreach (var cat in PortfolioDataStore.SkillCategories)
+                {
+                    <div class="space-y-3">
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-[#adc6ff]">
+                            @cat.Title
+                        </h4>
+                        <div class="flex flex-wrap gap-2">
+                            @foreach (var tag in cat.Tags)
+                            {
+                                var isSelected = selectedTag == tag.Name;
+                                <button @onclick="() => SelectTag(tag.Name)"
+                                    class="skill-tag px-3.5 py-1.5 text-xs rounded transition-all cursor-pointer @(tag.IsCore ? "core-mastery" : "text-slate-400") @(isSelected ? "bg-blue-900/30 border-[#3b82f6] text-white" : "hover:bg-slate-800 hover:text-white")">
+                                    @tag.Name
+                                    @if (tag.IsCore)
+                                    {
+                                        <span class="ml-1 text-[9px] bg-[#4fdbc8]/15 text-[#4fdbc8] px-1 rounded">Core</span>
+                                    }
+                                </button>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- Terminal output diagnostic console -->
+            <div class="lg:col-span-5">
+                <div class="glass-card rounded-xl p-6 bg-[#010f1f]/90 border border-slate-700/60 font-mono h-full flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+                            <div class="flex items-center gap-2">
+                                <span class="w-3 w-3 h-3 rounded-full bg-red-400"></span>
+                                <span class="w-3 w-3 h-3 rounded-full bg-yellow-400"></span>
+                                <span class="w-3 w-3 h-3 rounded-full bg-green-400"></span>
+                                <span class="text-xs text-slate-400 ml-1">diagnostic_analyzer.sh</span>
+                            </div>
+                            <span class="text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded">dotnet8</span>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div class="flex justify-between text-xs">
+                                <span class="text-slate-500">SELECTED TARGET:</span>
+                                <span class="text-[#4fdbc8] font-bold">@selectedTag</span>
+                            </div>
+                            <div class="flex justify-between text-xs">
+                                <span class="text-slate-500">PARSER STATUS:</span>
+                                <span class="text-[10px] bg-[#4fdbc8]/10 text-[#4fdbc8] px-2 py-0.5 rounded border border-[#4fdbc8]/20 animate-pulse">
+                                    @currentDiagnostic.Status
+                                </span>
+                            </div>
+                            <p class="text-xs text-slate-400 leading-relaxed border-t border-slate-800/80 pt-4">
+                                <span class="text-[#3b82f6]">&gt; </span>@currentDiagnostic.Desc
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="mt-8 pt-4 border-t border-slate-800/60 space-y-2">
+                        <div class="flex justify-between text-[11px]">
+                            <span class="text-slate-500">CAPABILITY RATING:</span>
+                            <span class="text-[#adc6ff]">@currentDiagnostic.Stat</span>
+                        </div>
+                        <div class="w-full bg-slate-900 h-2 rounded overflow-hidden">
+                            <div class="bg-gradient-to-r from-[#3b82f6] to-[#4fdbc8] h-full transition-all" style="width: 94%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Experience Timelines -->
+    <section id="experience">
+        <div class="flex items-center gap-4 mb-10">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-[#4fdbc8] text-xl">work</span>
+                <h2 class="text-3xl font-bold text-white tracking-tight">工作经历</h2>
+            </div>
+            <div class="h-[1px] flex-grow bg-gradient-to-r from-slate-800 to-transparent"></div>
+        </div>
+
+        <div class="relative pl-8 border-l-2 border-slate-800 space-y-12">
+            @foreach (var work in PortfolioDataStore.WorkHistories)
+            {
+                var workId = work.Id;
+                var isSelected = activeExp == workId;
+                <div @onclick="() => SetActiveExp(workId)" class="relative cursor-pointer group">
+                    <div class="absolute -left-[41px] top-1.5 w-5 h-5 rounded-full border-4 border-[#051424] transition-all @(work.IsCurrent ? "bg-[#4fdbc8]" : "bg-slate-700")"></div>
+                    
+                    <div class="glass-card p-6 rounded-xl transition-all @(isSelected ? "border-[#3b82f6] bg-slate-800/30" : "")">
+                        <div class="flex flex-col md:flex-row justify-between md:items-center gap-2 mb-4">
+                          <div>
+                            <h3 class="text-xl font-bold text-white">@work.Company</h3>
+                            <p class="text-[#4fdbc8] font-mono text-xs font-bold">@work.Role</p>
+                          </div>
+                          <span class="text-slate-400 font-mono text-xs bg-slate-900 border border-slate-800 px-3 py-1 rounded">
+                              @work.Period
+                          </span>
+                        </div>
+                        
+                        <p class="text-slate-300 text-sm leading-relaxed mb-6">@work.Desc</p>
+
+                        <div class="space-y-3 mt-4 border-t border-slate-800/50 pt-4">
+                            <h4 class="text-xs font-mono font-bold text-[#adc6ff] uppercase tracking-wider flex items-center gap-1">
+                                Achievements
+                            </h4>
+                            <ul class="space-y-2">
+                                @foreach (var ach in PortfolioDataStore.ExperienceAchievements[workId])
+                                {
+                                    <li class="flex items-start gap-2 text-xs text-slate-400">
+                                        <span class="text-[#4fdbc8]">•</span>
+                                        <span>@ach</span>
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </section>
+
+    <!-- Projects Grid Slider -->
+    <section id="projects">
+        <div class="flex items-center gap-4 mb-10">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-[#4fdbc8] text-xl">database</span>
+                <h2 class="text-3xl font-bold text-white tracking-tight">项目经历</h2>
+            </div>
+            <div class="h-[1px] flex-grow bg-gradient-to-r from-slate-800 to-transparent"></div>
+        </div>
+
+        <div class="space-y-12">
+            <!-- Feature Project PMIS -->
+            <div class="glass-card p-8 rounded-xl bg-gradient-to-r from-[#0f172a]/70 to-[#051424] relative overflow-hidden">
+                <div class="flex flex-col sm:flex-row justify-between items-start gap-4 mb-6">
+                    <div>
+                        <span class="px-2 bg-slate-700 text-[#adc6ff] text-[10px] font-mono rounded">CORE DESIGN</span>
+                        <h3 class="text-2xl font-bold text-white mt-2">PMIS 研发项目管理平台</h3>
+                    </div>
+                </div>
+
+                <p class="text-[#c6c6cd] text-sm leading-relaxed mb-6">
+                    该平台架构完全契合 IPD 系统级质量流转体系，深度服务研发团队。内嵌全生命周期关卡及流式审查机制。
+                </p>
+
+                <!-- Interactive tabs -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    @foreach (var tab in new[] { "flow", "review", "collab", "metrics" })
+                    {
+                        var isS = selectedPmisTab == tab;
+                        <button @onclick="() => SelectPmisTab(tab)"
+                            class="p-4 rounded-lg border text-left cursor-pointer @(isS ? "bg-[#1c2b3c] border-[#3b82f6]" : "bg-slate-900/40 border-slate-800")">
+                            <span class="text-xs uppercase font-mono tracking-wider font-bold text-[#4fdbc8]">
+                                @(tab == "flow" ? "流程管理" : tab == "review" ? "技术评审" : tab == "collab" ? "协作引擎" : "效能分析")
+                            </span>
+                        </button>
+                    }
+                </div>
+
+                <div class="bg-[#010f1f]/80 p-4 rounded border border-slate-800 font-mono text-xs">
+                    <span class="text-[#3b82f6]">&gt;&gt; </span> @pmisFeedback
+                </div>
+            </div>
+
+            <!-- Smart Canteen SaaS -->
+            <div class="glass-card p-8 rounded-xl border-t-4 border-t-[#4fdbc8] bg-gradient-to-b from-[#122131]/30 to-[#051424]">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    <div class="lg:col-span-7 space-y-6">
+                        <h3 class="text-2xl font-bold text-white">智慧食堂 SaaS 平台</h3>
+                        <p class="text-slate-300 text-sm leading-relaxed">
+                            服务企业园区、医院及学校食堂场景，
+                            负责消费结算、充值管理、
+                            RFID识别及设备通信功能开发。
+                        </p>
+
+                        <!-- Live range component -->
+                        <div class="p-4 bg-slate-950/60 rounded border border-slate-900 font-mono text-xs space-y-3">
+                            <div class="flex justify-between">
+                                <span>POS LATENCY THRESHOLD:</span>
+                                <span class="text-[#4fdbc8]">@latencySlider ms</span>
+                            </div>
+                            <input type="range" min="10" max="100" @bind="latencySlider" @bind:event="oninput"
+                                class="w-full" />
+                            <div class="flex justify-between text-[10px] text-slate-500">
+                                <span>@(latencySlider > 60 ? "⚠️ DETECTOR TIMEOUT POTENTIAL" : "🟢 STABLE")</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-5 bg-slate-950/40 p-6 rounded-xl flex flex-col justify-between border border-slate-800">
+                        <div class="text-center py-4 bg-[#010f1f] rounded border border-slate-900">
+                            <p class="text-mono text-[10px] text-slate-500">设备在线数</p>
+                            <p class="text-3xl font-bold text-[#4fdbc8] mt-2">@canteenActiveCount+</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Compact Projects Grid -->
+            <div class="mt-16">
+                <h3 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[#4fdbc8] text-lg">apps</span>
+                    其他项目经历
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    @foreach (var project in PortfolioDataStore.CompactProjects)
+                    {
+                        <div class="glass-card p-6 rounded-xl border-l-4 border-l-[#4fdbc8] group cursor-pointer">
+                            <div class="flex items-start justify-between mb-3">
+                                <div class="flex-grow">
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <span class="px-2 py-0.5 bg-[#3b82f6]/10 border border-[#3b82f6]/30 text-[#3b82f6] text-[10px] font-mono rounded">
+                                            @project.Type
+                                        </span>
+                                        <span class="text-[10px] font-mono text-slate-500">@project.Year</span>
+                                    </div>
+                                    <h4 class="text-lg font-bold text-white group-hover:text-[#4fdbc8] transition-colors">
+                                        @project.Title
+                                    </h4>
+                                </div>
+                            </div>
+
+                            <p class="text-sm text-slate-300 leading-relaxed mb-4">
+                                @project.Desc
+                            </p>
+
+                            <div class="flex flex-wrap gap-2 pt-3 border-t border-slate-800/50">
+                                @foreach (var skill in project.Skills)
+                                {
+                                    <span class="px-2 py-1 bg-slate-900/60 border border-slate-800 text-[#adc6ff] text-[10px] font-mono rounded">
+                                        @skill
+                                    </span>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Interactive Contact Form -->
+    <section id="contact">
+        <div class="flex items-center gap-4 mb-10">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-[#4fdbc8] text-xl">mail</span>
+                <h2 class="text-3xl font-bold text-white tracking-tight">联系合作</h2>
+            </div>
+            <div class="h-[1px] flex-grow bg-gradient-to-r from-slate-800 to-transparent"></div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div class="lg:col-span-7 glass-card p-8 rounded-xl bg-gradient-to-b from-[#122131]/20 to-[#051424]">
+                <h3 class="text-xl font-bold mb-4">发送 System Request 握手包</h3>
+                
+                <EditForm Model="@contactForm" OnValidSubmit="HandleContactSubmit" class="space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-mono text-slate-500 uppercase">Name *</label>
+                            <InputText @bind-Value="contactForm.Name" class="w-full bg-[#051424] border border-slate-800 rounded p-2.5 text-xs text-white" />
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-mono text-slate-500 uppercase">Email *</label>
+                            <InputText @bind-Value="contactForm.Email" class="w-full bg-[#051424] border border-slate-800 rounded p-2.5 text-xs text-white" />
+                        </div>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-mono text-slate-500 uppercase">Description *</label>
+                        <InputTextArea @bind-Value="contactForm.Message" rows="4" class="w-full bg-[#051424] border border-slate-800 rounded p-2.5 text-xs text-white resize-none" />
+                    </div>
+
+                    @if (showSuccessMsg)
+                    {
+                        <div class="p-3 bg-[#4fdbc8]/15 border border-[#4fdbc8]/30 rounded text-xs text-[#4fdbc8] font-mono">
+                            SUCCESS_200: Handshake Packet delivered securely to Blazor memory stack.
+                        </div>
+                    }
+
+                    <button type="submit"
+                        class="w-full bg-[#bec6e0] text-[#283044] hover:bg-white font-mono font-bold text-xs uppercase tracking-widest py-3 rounded cursor-pointer">
+                        TRANSMIT payload
+                    </button>
+                </EditForm>
+            </div>
+
+            <!-- Debug live tracing log -->
+            <div class="lg:col-span-5 glass-card p-6 rounded-xl flex flex-col justify-between min-h-[220px]">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-2 font-mono">
+                    <span class="text-xs text-slate-300">Blazor Handshake Trace</span>
+                    <span class="w-2 h-2 bg-green-500 rounded-full animate-ping"></span>
+                </div>
+                <div class="font-mono text-[10px] text-slate-400 space-y-1.5 flex-grow">
+                    @if (traceLogs.Count == 0)
+                    {
+                        <p class="text-slate-600 italic">Waiting for pipeline interaction nodes...</p>
+                    }
+                    @foreach (var log in traceLogs)
+                    {
+                        <p><span class="text-[#3b82f6]">&gt;&gt;</span> @log</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<!-- Resume Modal -->
+@if (resumeModalOpen)
+{
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-md" @onclick="ToggleResumeModal"></div>
+        
+        <div class="glass-card bg-[#0d1c2d] border border-slate-700 max-w-2xl w-full rounded-2xl shadow-2xl overflow-hidden relative z-10 max-h-[90vh] flex flex-col font-sans">
+            <div class="flex items-center justify-between border-b border-slate-800 p-5 bg-[#051424]">
+                <h3 class="font-mono text-sm font-bold text-white">PORTABLE_RESUME_SNAPSHOT.BIN</h3>
+                <button class="text-slate-400 hover:text-white" @onclick="ToggleResumeModal">
+                    <span class="material-symbols-outlined text-sm">close</span>
+                </button>
+            </div>
+
+            <div class="p-6 overflow-y-auto space-y-6 text-xs leading-normal">
+                <div class="border-b border-slate-800 pb-4">
+                    <h4 class="text-xl font-bold text-white">15年全栈开发专家 (Blazor Render Template)</h4>
+                    <p class="text-[#4fdbc8] font-mono text-[10px]">C# &amp; .NET Core 8.0 Expert Team</p>
+                </div>
+                
+                <div class="bg-[#051424] p-4 rounded border border-slate-800 font-mono">
+                    <h5 class="text-white font-bold mb-2">主研技术特征 Mastery Profiles</h5>
+                    <p class="text-slate-400">
+                        .NET Core 8.0 SDK, C# 12, SqlSugar ORM, SignalR Real-Time Broadcaster, Microservices Cluster setup, RFID integration, RS232 COM port driver design.
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex gap-2 border-t border-slate-800 p-4 bg-[#051424]">
+                <button class="flex-grow bg-[#3b82f6] text-white py-2 rounded text-xs font-mono font-bold" @onclick="ToggleResumeModal">
+                    CLOSE BIN VIEW
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private string selectedTag = ".NET 6/8";
+    private string activeExp = "work-1";
+    private string selectedPmisTab = "flow";
+    private string pmisFeedback = "项目立项流程配置完成，当前流程运行正常。";
+    
+    private int latencySlider = 60;
+    private int canteenActiveCount = 328;
+    
+    private bool resumeModalOpen = false;
+    private bool showSuccessMsg = false;
+    private int telemetryHz = 60;
+    
+    private Timer? hzTimer;
+    private Timer? activeCounterTimer;
+
+    private List<string> traceLogs = new();
+
+    private ContactForm contactForm = new();
+
+    private (string Desc, string Stat, string Status) currentDiagnostic => 
+        PortfolioDataStore.SkillDiagnostics.TryGetValue(selectedTag, out var diag) 
+            ? diag 
+            : ("熟练整合该技术栈，并支持快速构建其企业级交付模块。", "Mastery Level • Dynamic Profile", "MONITORED");
+
+    protected override void OnInitialized()
+    {
+        // Start live simulation updates
+        hzTimer = new Timer(_ => 
+        {
+            var r = new Random();
+            telemetryHz = 60 + r.Next(-3, 4);
+            InvokeAsync(StateHasChanged);
+        }, null, 1500, 1500);
+
+        activeCounterTimer = new Timer(_ => 
+        {
+            if (canteenActiveCount < 2380)
+            {
+                var r = new Random();
+                canteenActiveCount += r.Next(10, 31);
+                InvokeAsync(StateHasChanged);
+            }
+        }, null, 200, 200);
+
+        AddLog("个人简历系统初始化完成。");
+    }
+
+    private void SelectTag(string tag)
+    {
+        selectedTag = tag;
+        AddLog($"DIAGNOSTICS: Target changed to \"{tag}\"");
+    }
+
+    private void SetActiveExp(string id)
+    {
+        activeExp = id;
+        AddLog($"TIMELINE: Explored detailed records for cluster \"{id}\"");
+    }
+
+    private void SelectPmisTab(string tab)
+    {
+        selectedPmisTab = tab;
+
+        pmisFeedback = tab switch
+        {
+            "flow" => "项目流程配置与审批节点管理。",
+            "review" => "技术评审记录及评审意见跟踪。",
+            "collab" => "项目成员协同及任务管理。",
+            "metrics" => "项目绩效统计及研发数据分析。",
+            _ => "PMIS ACTIVE"
+        };
+
+        AddLog($"PMIS模块切换: {tab}");
+    }
+
+    private void ToggleResumeModal()
+    {
+        resumeModalOpen = !resumeModalOpen;
+        AddLog($"MODAL_SNAPSHOT: Requested portable Snap CV binary. Toggle state: {resumeModalOpen}");
+    }
+
+    private void HandleContactSubmit()
+    {
+        if (string.IsNullOrWhiteSpace(contactForm.Name) || string.IsNullOrWhiteSpace(contactForm.Email))
+            return;
+
+        showSuccessMsg = true;
+        AddLog($"PACKET_TRANSMISSION: Port mailing handshaking protocol initialized by name: {contactForm.Name}");
+        contactForm = new();
+    }
+
+    private void AddLog(string msg)
+    {
+        traceLogs.Add($"[{DateTime.Now:HH:mm:ss}] {msg}");
+        if (traceLogs.Count > 10)
+        {
+            traceLogs.RemoveAt(0);
+        }
+    }
+
+    public void Dispose()
+    {
+        hzTimer?.Dispose();
+        activeCounterTimer?.Dispose();
+    }
+
+    public class ContactForm
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Message { get; set; } = string.Empty;
+    }
+}

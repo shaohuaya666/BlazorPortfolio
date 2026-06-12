@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="/" />
+    <title>个人简历（梁曦）</title>
+    
+    <!-- Tailwind CSS CDN and Material Symbols for instant styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;700&family=Geist:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+    
+    <style>
+        body {
+            background-color: #051424;
+            color: #d4e4fa;
+            font-family: "Inter", sans-serif;
+            scroll-behavior: smooth;
+        }
+
+        .glass-card {
+            background: rgba(30, 41, 59, 0.45);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(51, 65, 85, 0.4);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            border-color: #3b82f6;
+            background: rgba(30, 41, 59, 0.75);
+            transform: translateY(-2px);
+        }
+
+        .skill-tag {
+            font-family: "JetBrains Mono", monospace;
+            border: 1px solid rgba(51, 65, 85, 0.5);
+            background: rgba(15, 23, 42, 0.3);
+        }
+
+        .core-mastery {
+            border-color: #4fdbc8;
+            color: #4fdbc8;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+    <HeadOutlet />
+</head>
+
+<body class="bg-[#051424] text-[#d4e4fa]">
+    <Routes />
+    <script src="_framework/blazor.web.js"></script>
+</body>
+
+</html>
