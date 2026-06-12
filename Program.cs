@@ -1,11 +1,19 @@
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
+using BlazorPortfolio.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+// 添加 SignalR 服务
+builder.Services.AddSignalR();
+
+// 配置 Antiforgery 选项
+builder.Services.AddAntiforgery(options =>
+{
+    options.SuppressXFrameOptionsHeader = false;
+});
 
 var app = builder.Build();
 
@@ -24,5 +32,8 @@ app.UseAntiforgery();
 
 app.MapRazorComponents<BlazorPortfolio.App>()
     .AddInteractiveServerRenderMode();
+
+// 映射 SignalR Hub
+app.MapHub<PortfolioHub>("/portfolioHub");
 
 app.Run();
