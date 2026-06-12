@@ -138,7 +138,7 @@ namespace BlazorPortfolio.Models
                 Id = "work-1",
                 Company = "浙江慧博科技股份有限公司",
                 Role = "软件开发主管工程师",
-                Period = "2022 - 至今",
+                Period = "2025 - 至今",
                 Desc = "负责PMIS、PVS、RDMS及PLM相关企业管理系统开发，参与需求分析、数据库设计、接口开发及性能优化工作。",
                 IsCurrent = true
             },
@@ -148,7 +148,7 @@ namespace BlazorPortfolio.Models
                 Id = "work-2",
                 Company = "浙江雄伟科技开发股份有限公司",
                 Role = "全栈开发工程师",
-                Period = "2018 - 2022",
+                Period = "2014 - 2025",
                 Desc = "参与智慧食堂及智慧餐饮SaaS平台研发，负责业务功能开发、设备通信集成及系统实施支持。",
                 IsCurrent = false
             }

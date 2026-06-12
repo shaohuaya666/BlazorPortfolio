@@ -4,9 +4,21 @@
 @using BlazorPortfolio.Models
 @using Microsoft.AspNetCore.SignalR.Client
 @inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
 @implements IAsyncDisposable
 
 <PageTitle>个人简历（Blazor Server）</PageTitle>
+
+<style>
+    html {
+        scroll-behavior: smooth;
+    }
+
+    /* 为每个 section 添加滚动偏移，补偿固定导航栏高度 */
+    section[id] {
+        scroll-margin-top: 100px;
+    }
+</style>
 
 <!-- Header sticky nav -->
 <nav class="bg-[#051424]/80 backdrop-blur-xl border-b border-slate-800/40 sticky top-0 z-50 transition-all duration-300">
@@ -83,13 +95,12 @@
         <h1 class="text-4xl sm:text-5xl md:text-6xl font-black leading-tight tracking-tight text-white max-w-5xl mx-auto">
             全栈开发工程师 <br />
             <span class="bg-gradient-to-r from-[#bec6e0] via-[#adc6ff] to-[#4fdbc8] bg-clip-text text-transparent">
-                专注制造业数字化系统研发
+                专注数字化系统研发
             </span>
         </h1>
 
         <p class="max-w-3xl mx-auto text-sm sm:text-base md:text-lg text-[#c6c6cd] leading-relaxed">
-            深耕企业级高质量并发系统、复杂工业物联网（IoT）集成环境及高可用多租户 SaaS 分布式架构设计。
-            已在 Blazor Server 强交互模式下重塑，以提供后端直跑驱动级高还原度微服务展示方案。
+            熟悉企业级高并发、复杂IoT集成、高可用架构设计，可交付可执行的后端原型代码，保证演示效果与设计文档一致。
         </p>
 
         <div class="flex flex-wrap gap-4 justify-center pt-2">
