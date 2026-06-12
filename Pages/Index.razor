@@ -1,7 +1,10 @@
 @page "/"
+@rendermode @(new Microsoft.AspNetCore.Components.Web.InteractiveServerRenderMode())
 @using System.Threading
 @using BlazorPortfolio.Models
-@implements IDisposable
+@using Microsoft.AspNetCore.SignalR.Client
+@inject NavigationManager Navigation
+@implements IAsyncDisposable
 
 <PageTitle>个人简历（Blazor Server）</PageTitle>
 
@@ -48,9 +51,33 @@
     </div>
 
     <div class="relative z-10 max-w-7xl px-6 text-center space-y-6">
-        <div class="inline-flex items-center gap-2 py-1 px-3 bg-[#4fdbc8]/10 border border-[#4fdbc8]/20 text-[#4fdbc8] font-mono text-xs rounded-full">
-            <span class="w-1.5 h-1.5 bg-[#4fdbc8] rounded-full animate-ping"></span>
-            .NET Core 8 Blazor Server Active
+        <div class="flex flex-wrap justify-center gap-3">
+            <div class="inline-flex items-center gap-2 py-1 px-3 bg-[#4fdbc8]/10 border border-[#4fdbc8]/20 text-[#4fdbc8] font-mono text-xs rounded-full">
+                <span class="w-1.5 h-1.5 bg-[#4fdbc8] rounded-full animate-ping"></span>
+                .NET Core 8 Blazor Server Active
+            </div>
+
+            @if (hubConnection?.State == HubConnectionState.Connected)
+            {
+                <div class="inline-flex items-center gap-2 py-1 px-3 bg-green-500/10 border border-green-500/20 text-green-400 font-mono text-xs rounded-full">
+                    <span class="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
+                    SignalR 实时通信已连接
+                </div>
+            }
+            else if (hubConnection?.State == HubConnectionState.Connecting)
+            {
+                <div class="inline-flex items-center gap-2 py-1 px-3 bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 font-mono text-xs rounded-full">
+                    <span class="w-1.5 h-1.5 bg-yellow-400 rounded-full animate-bounce"></span>
+                    SignalR 连接中...
+                </div>
+            }
+            else
+            {
+                <div class="inline-flex items-center gap-2 py-1 px-3 bg-red-500/10 border border-red-500/20 text-red-400 font-mono text-xs rounded-full">
+                    <span class="w-1.5 h-1.5 bg-red-400 rounded-full"></span>
+                    SignalR 未连接
+                </div>
+            }
         </div>
 
         <h1 class="text-4xl sm:text-5xl md:text-6xl font-black leading-tight tracking-tight text-white max-w-5xl mx-auto">
@@ -261,7 +288,7 @@
 
         <div class="space-y-12">
             <!-- Feature Project PMIS -->
-            <div class="glass-card p-8 rounded-xl bg-gradient-to-r from-[#0f172a]/70 to-[#051424] relative overflow-hidden">
+            <div class="glass-card p-8 rounded-xl bg-gradient-to-r from-[#0f172a]/70 to-[#051424] relative" style="overflow: visible;">
                 <div class="flex flex-col sm:flex-row justify-between items-start gap-4 mb-6">
                     <div>
                         <span class="px-2 bg-slate-700 text-[#adc6ff] text-[10px] font-mono rounded">CORE DESIGN</span>
@@ -274,14 +301,24 @@
                 </p>
 
                 <!-- Interactive tabs -->
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6" style="position: relative; z-index: 20;">
                     @foreach (var tab in new[] { "flow", "review", "collab", "metrics" })
                     {
                         var isS = selectedPmisTab == tab;
-                        <button @onclick="() => SelectPmisTab(tab)"
-                            class="p-4 rounded-lg border text-left cursor-pointer @(isS ? "bg-[#1c2b3c] border-[#3b82f6]" : "bg-slate-900/40 border-slate-800")">
-                            <span class="text-xs uppercase font-mono tracking-wider font-bold text-[#4fdbc8]">
-                                @(tab == "flow" ? "流程管理" : tab == "review" ? "技术评审" : tab == "collab" ? "协作引擎" : "效能分析")
+                        var tabLabel = tab switch {
+                            "flow" => "流程管理",
+                            "review" => "技术评审",
+                            "collab" => "协作引擎",
+                            "metrics" => "效能分析",
+                            _ => tab
+                        };
+                        <button type="button"
+                                @onclick="@(() => SelectPmisTab(tab))"
+                                @onclick:stopPropagation="true"
+                                style="pointer-events: auto; position: relative; z-index: 30;"
+                                class="p-4 rounded-lg border text-left cursor-pointer transition-all @(isS ? "bg-[#1c2b3c] border-[#3b82f6]" : "bg-slate-900/40 border-slate-800 hover:bg-slate-800/60 hover:border-slate-700")">
+                            <span class="text-xs uppercase font-mono tracking-wider font-bold text-[#4fdbc8] pointer-events-none">
+                                @tabLabel
                             </span>
                         </button>
                     }
@@ -383,32 +420,39 @@
             <div class="lg:col-span-7 glass-card p-8 rounded-xl bg-gradient-to-b from-[#122131]/20 to-[#051424]">
                 <h3 class="text-xl font-bold mb-4">发送 System Request 握手包</h3>
                 
-                <EditForm Model="@contactForm" OnValidSubmit="HandleContactSubmit" class="space-y-4">
+                <EditForm Model="@contactForm" OnValidSubmit="HandleContactSubmit" Enhance="false" class="space-y-4">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div class="space-y-1">
-                            <label class="text-[10px] font-mono text-slate-500 uppercase">Name *</label>
+                            <label class="text-[10px] font-mono text-slate-500 uppercase">姓名 *</label>
                             <InputText @bind-Value="contactForm.Name" class="w-full bg-[#051424] border border-slate-800 rounded p-2.5 text-xs text-white" />
                         </div>
                         <div class="space-y-1">
-                            <label class="text-[10px] font-mono text-slate-500 uppercase">Email *</label>
+                            <label class="text-[10px] font-mono text-slate-500 uppercase">邮件 *</label>
                             <InputText @bind-Value="contactForm.Email" class="w-full bg-[#051424] border border-slate-800 rounded p-2.5 text-xs text-white" />
                         </div>
                     </div>
                     <div class="space-y-1">
-                        <label class="text-[10px] font-mono text-slate-500 uppercase">Description *</label>
+                        <label class="text-[10px] font-mono text-slate-500 uppercase">内容 *</label>
                         <InputTextArea @bind-Value="contactForm.Message" rows="4" class="w-full bg-[#051424] border border-slate-800 rounded p-2.5 text-xs text-white resize-none" />
                     </div>
 
                     @if (showSuccessMsg)
                     {
-                        <div class="p-3 bg-[#4fdbc8]/15 border border-[#4fdbc8]/30 rounded text-xs text-[#4fdbc8] font-mono">
-                            SUCCESS_200: Handshake Packet delivered securely to Blazor memory stack.
+                        <div class="p-3 bg-[#4fdbc8]/15 border border-[#4fdbc8]/30 rounded text-xs text-[#4fdbc8] font-mono animate-pulse">
+                            ✓ SUCCESS_200: SignalR 实时握手包已传输 - 所有连接客户端已收到通知
+                        </div>
+                    }
+
+                    @if (hubConnection?.State != HubConnectionState.Connected)
+                    {
+                        <div class="p-3 bg-yellow-500/15 border border-yellow-500/30 rounded text-xs text-yellow-400 font-mono">
+                            ⚠️ SignalR 未连接 - 实时通信功能不可用
                         </div>
                     }
 
                     <button type="submit"
                         class="w-full bg-[#bec6e0] text-[#283044] hover:bg-white font-mono font-bold text-xs uppercase tracking-widest py-3 rounded cursor-pointer">
-                        TRANSMIT payload
+                        发送消息
                     </button>
                 </EditForm>
             </div>
@@ -416,13 +460,13 @@
             <!-- Debug live tracing log -->
             <div class="lg:col-span-5 glass-card p-6 rounded-xl flex flex-col justify-between min-h-[220px]">
                 <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-2 font-mono">
-                    <span class="text-xs text-slate-300">Blazor Handshake Trace</span>
+                    <span class="text-xs text-slate-300">SignalR消息</span>
                     <span class="w-2 h-2 bg-green-500 rounded-full animate-ping"></span>
                 </div>
                 <div class="font-mono text-[10px] text-slate-400 space-y-1.5 flex-grow">
                     @if (traceLogs.Count == 0)
                     {
-                        <p class="text-slate-600 italic">Waiting for pipeline interaction nodes...</p>
+                        <p class="text-slate-600 italic">等待交互事件...</p>
                     }
                     @foreach (var log in traceLogs)
                     {
@@ -473,18 +517,19 @@
 }
 
 @code {
+    private HubConnection? hubConnection;
     private string selectedTag = ".NET 6/8";
     private string activeExp = "work-1";
     private string selectedPmisTab = "flow";
     private string pmisFeedback = "项目立项流程配置完成，当前流程运行正常。";
-    
+
     private int latencySlider = 60;
     private int canteenActiveCount = 328;
-    
+
     private bool resumeModalOpen = false;
     private bool showSuccessMsg = false;
     private int telemetryHz = 60;
-    
+
     private Timer? hzTimer;
     private Timer? activeCounterTimer;
 
@@ -492,22 +537,80 @@
 
     private ContactForm contactForm = new();
 
-    private (string Desc, string Stat, string Status) currentDiagnostic => 
-        PortfolioDataStore.SkillDiagnostics.TryGetValue(selectedTag, out var diag) 
-            ? diag 
+    private (string Desc, string Stat, string Status) currentDiagnostic =>
+        PortfolioDataStore.SkillDiagnostics.TryGetValue(selectedTag, out var diag)
+            ? diag
             : ("熟练整合该技术栈，并支持快速构建其企业级交付模块。", "Mastery Level • Dynamic Profile", "MONITORED");
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
+        // 初始化 SignalR 连接
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl(Navigation.ToAbsoluteUri("/portfolioHub"))
+            .WithAutomaticReconnect()
+            .Build();
+
+        // 注册接收联系日志的处理器
+        hubConnection.On<string>("ReceiveContactLog", (log) =>
+        {
+            traceLogs.Add(log);
+            if (traceLogs.Count > 10)
+            {
+                traceLogs.RemoveAt(0);
+            }
+            InvokeAsync(StateHasChanged);
+        });
+
+        // 注册接收系统日志的处理器
+        hubConnection.On<string>("ReceiveSystemLog", (log) =>
+        {
+            traceLogs.Add(log);
+            if (traceLogs.Count > 10)
+            {
+                traceLogs.RemoveAt(0);
+            }
+            InvokeAsync(StateHasChanged);
+        });
+
+        // 注册接收联系提交成功消息的处理器
+        hubConnection.On<string>("ContactSubmitSuccess", (message) =>
+        {
+            showSuccessMsg = true;
+            traceLogs.Add($"[{DateTime.Now:HH:mm:ss}] SUCCESS: {message}");
+            if (traceLogs.Count > 10)
+            {
+                traceLogs.RemoveAt(0);
+            }
+            InvokeAsync(StateHasChanged);
+
+            // 3秒后隐藏成功消息
+            Task.Delay(3000).ContinueWith(_ =>
+            {
+                showSuccessMsg = false;
+                InvokeAsync(StateHasChanged);
+            });
+        });
+
+        // 启动 SignalR 连接
+        try
+        {
+            await hubConnection.StartAsync();
+            AddLog("SignalR 连接已建立 - 实时通信已激活");
+        }
+        catch (Exception ex)
+        {
+            AddLog($"SignalR 连接失败: {ex.Message}");
+        }
+
         // Start live simulation updates
-        hzTimer = new Timer(_ => 
+        hzTimer = new Timer(_ =>
         {
             var r = new Random();
             telemetryHz = 60 + r.Next(-3, 4);
             InvokeAsync(StateHasChanged);
         }, null, 1500, 1500);
 
-        activeCounterTimer = new Timer(_ => 
+        activeCounterTimer = new Timer(_ =>
         {
             if (canteenActiveCount < 2380)
             {
@@ -524,16 +627,29 @@
     {
         selectedTag = tag;
         AddLog($"DIAGNOSTICS: Target changed to \"{tag}\"");
+
+        // 通过 SignalR 广播系统日志
+        if (hubConnection is not null && hubConnection.State == HubConnectionState.Connected)
+        {
+            _ = hubConnection.SendAsync("BroadcastSystemLog", $"技术栈切换至: {tag}");
+        }
     }
 
     private void SetActiveExp(string id)
     {
         activeExp = id;
         AddLog($"TIMELINE: Explored detailed records for cluster \"{id}\"");
+
+        // 通过 SignalR 广播系统日志
+        if (hubConnection is not null && hubConnection.State == HubConnectionState.Connected)
+        {
+            _ = hubConnection.SendAsync("BroadcastSystemLog", $"查看工作经历: {id}");
+        }
     }
 
     private void SelectPmisTab(string tab)
     {
+        Console.WriteLine($"[DEBUG] SelectPmisTab called with: {tab}"); // 调试输出
         selectedPmisTab = tab;
 
         pmisFeedback = tab switch
@@ -546,6 +662,12 @@
         };
 
         AddLog($"PMIS模块切换: {tab}");
+
+        // 通过 SignalR 广播系统日志
+        if (hubConnection is not null && hubConnection.State == HubConnectionState.Connected)
+        {
+            _ = hubConnection.SendAsync("BroadcastSystemLog", $"PMIS 模块切换: {tab}");
+        }
     }
 
     private void ToggleResumeModal()
@@ -554,14 +676,29 @@
         AddLog($"MODAL_SNAPSHOT: Requested portable Snap CV binary. Toggle state: {resumeModalOpen}");
     }
 
-    private void HandleContactSubmit()
+    private async Task HandleContactSubmit()
     {
         if (string.IsNullOrWhiteSpace(contactForm.Name) || string.IsNullOrWhiteSpace(contactForm.Email))
             return;
 
-        showSuccessMsg = true;
-        AddLog($"PACKET_TRANSMISSION: Port mailing handshaking protocol initialized by name: {contactForm.Name}");
-        contactForm = new();
+        // 通过 SignalR 发送消息到服务器
+        if (hubConnection is not null && hubConnection.State == HubConnectionState.Connected)
+        {
+            try
+            {
+                await hubConnection.SendAsync("SendContactMessage", contactForm.Name, contactForm.Email, contactForm.Message);
+                AddLog($"📤 通过 SignalR 发送握手包: {contactForm.Name}");
+                contactForm = new();
+            }
+            catch (Exception ex)
+            {
+                AddLog($"❌ SignalR 发送失败: {ex.Message}");
+            }
+        }
+        else
+        {
+            AddLog("⚠️ SignalR 未连接，无法发送消息");
+        }
     }
 
     private void AddLog(string msg)
@@ -573,10 +710,15 @@
         }
     }
 
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
         hzTimer?.Dispose();
         activeCounterTimer?.Dispose();
+
+        if (hubConnection is not null)
+        {
+            await hubConnection.DisposeAsync();
+        }
     }
 
     public class ContactForm
