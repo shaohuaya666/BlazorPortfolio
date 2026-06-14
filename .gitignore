@@ -400,3 +400,16 @@ FodyWeavers.xsd
 
 # Claude Code project-specific files (optional - uncomment if you don't want to share)
 # .claude/
+
+# 环境配置文件（含数据库密码等敏感信息，不提交到 Git）
+appsettings.Development.json
+appsettings.Production.json
+/Data/seed_data.sql
+
+# Node.js
+node_modules/
+package-lock.json
+
+# Tailwind CSS generated output (rebuild with npm run build:css)
+wwwroot/css/app.css
+/tailwindcss.exe

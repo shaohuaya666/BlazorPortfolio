@@ -1,293 +1,258 @@
-using System;
-using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
-namespace BlazorPortfolio.Models
+namespace BlazorPortfolio.Models;
+
+/// <summary>
+/// 个人优势实体
+/// </summary>
+public class Advantage
 {
-    public class Advantage
-    {
-        public string Id { get; set; } = string.Empty;
-        public string Num { get; set; } = string.Empty;
-        public string Title { get; set; } = string.Empty;
-        public string Desc { get; set; } = string.Empty;
-    }
+    /// <summary>
+    /// 主键
+    /// </summary>
+    [Key]
+    public string Id { get; set; } = string.Empty;
 
-    public class TagInfo
-    {
-        public string Name { get; set; } = string.Empty;
-        public bool IsCore { get; set; }
-    }
+    /// <summary>
+    /// 序号
+    /// </summary>
+    public string Num { get; set; } = string.Empty;
 
-    public class SkillCategory
-    {
-        public string Title { get; set; } = string.Empty;
-        public string ThemeColor { get; set; } = "primary"; // primary, secondary, tertiary, muted
-        public List<TagInfo> Tags { get; set; } = new();
-    }
+    /// <summary>
+    /// 优势标题
+    /// </summary>
+    public string Title { get; set; } = string.Empty;
 
-    public class WorkHistory
-    {
-        public string Id { get; set; } = string.Empty;
-        public string Company { get; set; } = string.Empty;
-        public string Role { get; set; } = string.Empty;
-        public string Period { get; set; } = string.Empty;
-        public string Desc { get; set; } = string.Empty;
-        public bool IsCurrent { get; set; }
-    }
+    /// <summary>
+    /// 优势描述
+    /// </summary>
+    public string Desc { get; set; } = string.Empty;
+}
 
-    public class CompactProject
-    {
-        public string Id { get; set; } = string.Empty;
-        public string Title { get; set; } = string.Empty;
-        public string Type { get; set; } = string.Empty;
-        public string Year { get; set; } = string.Empty;
-        public string Desc { get; set; } = string.Empty;
-        public List<string> Skills { get; set; } = new();
-    }
+/// <summary>
+/// 技术栈分类实体
+/// </summary>
+public class SkillCategory
+{
+    /// <summary>
+    /// 主键
+    /// </summary>
+    [Key]
+    public int Id { get; set; }
 
-    public static class PortfolioDataStore
-    {
-        public static readonly List<Advantage> Advantages = new()
-        {
-            new Advantage { Id = "adv-1", Num = "01", Title = "15年企业级开发经验", Desc = "长期从事制造业信息化系统研发，具备完整项目开发与交付经验。" },
-            new Advantage { Id = "adv-2", Num = "02", Title = "业务系统设计能力", Desc = "参与PLM、PVS、RDMS等系统建设，具备业务建模与模块设计能力。" },
-            new Advantage { Id = "adv-3", Num = "03", Title = "设备集成开发", Desc = "具备RS232、RS485、RFID、TCP/IP等设备接入开发经验。" },
-            new Advantage { Id = "adv-4", Num = "04", Title = "SQL性能优化", Desc = "擅长复杂SQL分析、执行计划优化及大型视图性能调优。" },
-            new Advantage { Id = "adv-5", Num = "05", Title = "全栈开发能力", Desc = "掌握.NET后端开发、前端页面开发及桌面端应用开发。" },
-            new Advantage { Id = "adv-6", Num = "06", Title = "独立交付能力", Desc = "能够独立完成需求分析、开发测试及系统上线工作。" },
-            new Advantage { Id = "adv-7", Num = "07", Title = "持续学习能力", Desc = "持续关注AI辅助开发、研发效能提升及.NET技术生态。" },
-            new Advantage { Id = "adv-8", Num = "08", Title = "团队协作能力", Desc = "具备跨部门沟通经验，能够高效推进项目落地。" }
-        };
+    /// <summary>
+    /// 分类名称
+    /// </summary>
+    public string Title { get; set; } = string.Empty;
 
-        public static readonly List<SkillCategory> SkillCategories = new()
-        {
-            new SkillCategory
-            {
-                Title = "后端开发",
-                ThemeColor = "tertiary",
-                Tags = new()
-                {
-                    new TagInfo { Name = ".NET 6/8", IsCore = true },
-                    new TagInfo { Name = "C#", IsCore = true },
-                    new TagInfo { Name = "ASP.NET Core", IsCore = true },
-                    new TagInfo { Name = "WebAPI", IsCore = true },
-                    new TagInfo { Name = "EF Core", IsCore = true },
-                    new TagInfo { Name = "SqlSugar", IsCore = true }
-                }
-            },
+    /// <summary>
+    /// 主题色标识
+    /// </summary>
+    public string ThemeColor { get; set; } = "primary";
 
-            new SkillCategory
-            {
-                Title = "前端 & 桌面端",
-                ThemeColor = "secondary",
-                Tags = new()
-                {
-                    new TagInfo { Name = "Vue", IsCore = true },
-                    new TagInfo { Name = "JavaScript", IsCore = false },
-                    new TagInfo { Name = "WinForms", IsCore = true },
-                    new TagInfo { Name = "WPF", IsCore = true }
-                }
-            },
+    /// <summary>
+    /// 关联的技术标签列表
+    /// </summary>
+    public List<TagInfo> Tags { get; set; } = new();
+}
 
-            new SkillCategory
-            {
-                Title = "设备通信",
-                ThemeColor = "primary",
-                Tags = new()
-                {
-                    new TagInfo { Name = "RS232", IsCore = true },
-                    new TagInfo { Name = "RS485", IsCore = true },
-                    new TagInfo { Name = "RFID", IsCore = true },
-                    new TagInfo { Name = "TCP/IP", IsCore = true },
-                    new TagInfo { Name = "Socket", IsCore = true }
-                }
-            },
+/// <summary>
+/// 技术标签实体
+/// </summary>
+public class TagInfo
+{
+    /// <summary>
+    /// 主键
+    /// </summary>
+    [Key]
+    public int Id { get; set; }
 
-            new SkillCategory
-            {
-                Title = "数据库",
-                ThemeColor = "muted",
-                Tags = new()
-                {
-                    new TagInfo { Name = "SQL Server", IsCore = true },
-                    new TagInfo { Name = "Oracle", IsCore = true },
-                    new TagInfo { Name = "PostgreSQL", IsCore = true },
-                    new TagInfo { Name = "MySQL", IsCore = true },
-                    new TagInfo { Name = "Redis", IsCore = true }
-                }
-            },
+    /// <summary>
+    /// 标签名称
+    /// </summary>
+    public string Name { get; set; } = string.Empty;
 
-            new SkillCategory
-            {
-                Title = "中间件 & 运维",
-                ThemeColor = "muted",
-                Tags = new()
-                {
-                    new TagInfo { Name = "RabbitMQ", IsCore = true },
-                    new TagInfo { Name = "Docker", IsCore = true },
-                    new TagInfo { Name = "Git", IsCore = true },
-                    new TagInfo { Name = "Nginx", IsCore = true },
-                    new TagInfo { Name = "CI/CD", IsCore = true }
-                }
-            }
-        };
+    /// <summary>
+    /// 是否为核心技能
+    /// </summary>
+    public bool IsCore { get; set; }
 
-        public static readonly List<WorkHistory> WorkHistories = new()
-        {
-            new WorkHistory
-            {
-                Id = "work-1",
-                Company = "浙江慧博科技股份有限公司",
-                Role = "软件开发主管工程师",
-                Period = "2025 - 至今",
-                Desc = "负责PMIS、PVS、RDMS及PLM相关企业管理系统开发，参与需求分析、数据库设计、接口开发及性能优化工作。",
-                IsCurrent = true
-            },
+    /// <summary>
+    /// 所属分类ID（外键）
+    /// </summary>
+    public int SkillCategoryId { get; set; }
 
-            new WorkHistory
-            {
-                Id = "work-2",
-                Company = "浙江雄伟科技开发股份有限公司",
-                Role = "全栈开发工程师",
-                Period = "2014 - 2025",
-                Desc = "参与智慧食堂及智慧餐饮SaaS平台研发，负责业务功能开发、设备通信集成及系统实施支持。",
-                IsCurrent = false
-            }
-        };
+    /// <summary>
+    /// 所属分类导航属性
+    /// </summary>
+    [ForeignKey(nameof(SkillCategoryId))]
+    public SkillCategory? SkillCategory { get; set; }
+}
 
-        public static readonly List<CompactProject> CompactProjects = new()
-        {
-            new CompactProject
-            {
-                Id = "plm",
-                Title = "PLM数据同步平台",
-                Type = "企业系统",
-                Year = "2025-至今",
-                Desc = "负责PLM物料同步、BOM结构处理及复杂视图性能优化。",
-                Skills = new() { "Oracle", "SQL优化" }
-            },
+/// <summary>
+/// 工作经历实体
+/// </summary>
+public class WorkHistory
+{
+    /// <summary>
+    /// 主键
+    /// </summary>
+    [Key]
+    public string Id { get; set; } = string.Empty;
 
-            new CompactProject
-            {
-                Id = "pvs",
-                Title = "工艺估价系统(PVS)",
-                Type = "企业系统",
-                Year = "2025-至今",
-                Desc = "负责对比物料同步与差异展示功能开发，实现定时同步及数据一致性校验。",
-                Skills = new() { ".NET", "SqlSugar" }
-            },
+    /// <summary>
+    /// 公司名称
+    /// </summary>
+    public string Company { get; set; } = string.Empty;
 
-            new CompactProject
-            {
-                Id = "rdms",
-                Title = "RDMS研发管理系统",
-                Type = "研发管理",
-                Year = "2026-至今",
-                Desc = "参与BOM管理、流程管理及研发过程数字化建设。",
-                Skills = new() { ".NET", "Vue" }
-            },
+    /// <summary>
+    /// 职位
+    /// </summary>
+    public string Role { get; set; } = string.Empty;
 
-            new CompactProject
-            {
-                Id = "receipt",
-                Title = "报销单扫码确认收单系统",
-                Type = "独立交付",
-                Year = "2025",
-                Desc = "通过扫码设备完成财务单据确认收单，实现业务闭环。",
-                Skills = new() { "WPF", "RS485" }
-            }
-        };
+    /// <summary>
+    /// 任职期间
+    /// </summary>
+    public string Period { get; set; } = string.Empty;
 
-        public static readonly Dictionary<string, string[]> ExperienceAchievements = new()
-        {
-            {
-                "work-1",
-                new[]
-                {
-                    "参与PMIS绩效管理系统功能开发与优化。",
-                    "负责PVS工艺估价系统对比物料同步及差异展示功能开发。",
-                    "完成PLM物料同步、BOM数据处理及接口开发。",
-                    "优化Oracle复杂视图及SQL查询性能，提升数据处理效率。",
-                    "独立完成需求分析、开发测试及上线部署工作。"
-                }
-            },
+    /// <summary>
+    /// 工作描述
+    /// </summary>
+    public string Desc { get; set; } = string.Empty;
 
-            {
-                "work-2",
-                new[]
-                {
-                    "参与智慧食堂SaaS平台核心功能开发。",
-                    "完成RFID、刷卡终端及设备通信功能集成。",
-                    "负责餐饮消费、充值结算等业务模块开发。",
-                    "参与高并发消费场景下的数据处理与性能优化。",
-                    "完成多种硬件设备接入及现场实施支持。"
-                }
-            }
-        };
+    /// <summary>
+    /// 是否为当前在职
+    /// </summary>
+    public bool IsCurrent { get; set; }
 
-        public static readonly Dictionary<string, (string Desc, string Stat, string Status)> SkillDiagnostics = new()
-        {
-            {
-                ".NET 6/8",
-                (
-                    "负责企业级业务系统开发，熟悉ASP.NET Core、WebAPI、依赖注入、中间件及异步编程。",
-                    "15 Years Experience",
-                    "ACTIVE"
-                )
-            },
+    /// <summary>
+    /// 关联的成就列表
+    /// </summary>
+    public List<Achievement> Achievements { get; set; } = new();
+}
 
-            {
-                "C#",
-                (
-                    "熟悉面向对象设计、LINQ、泛型、反射及常见设计模式应用。",
-                    "Advanced",
-                    "READY"
-                )
-            },
+/// <summary>
+/// 工作成就实体
+/// </summary>
+public class Achievement
+{
+    /// <summary>
+    /// 主键
+    /// </summary>
+    [Key]
+    public int Id { get; set; }
 
-            {
-                "SQL Server",
-                (
-                    "擅长复杂SQL编写、执行计划分析、索引优化及视图性能调优。",
-                    "SQL Optimization",
-                    "ONLINE"
-                )
-            },
+    /// <summary>
+    /// 成就描述
+    /// </summary>
+    public string Description { get; set; } = string.Empty;
 
-            {
-                "Oracle",
-                (
-                    "参与PLM及制造业系统开发，熟悉Oracle视图、存储过程及性能优化。",
-                    "Enterprise DB",
-                    "ONLINE"
-                )
-            },
+    /// <summary>
+    /// 所属工作经历ID（外键）
+    /// </summary>
+    public string WorkHistoryId { get; set; } = string.Empty;
 
-            {
-                "RabbitMQ",
-                (
-                    "具备消息队列开发经验，了解死信队列、延迟队列及异步解耦场景。",
-                    "Middleware",
-                    "RUNNING"
-                )
-            },
+    /// <summary>
+    /// 所属工作经历导航属性
+    /// </summary>
+    [ForeignKey(nameof(WorkHistoryId))]
+    public WorkHistory? WorkHistory { get; set; }
+}
 
-            {
-                "RS485",
-                (
-                    "具备串口通信开发经验，参与扫码设备及工业设备接入项目。",
-                    "Device Integration",
-                    "CONNECTED"
-                )
-            },
+/// <summary>
+/// 项目经历实体
+/// </summary>
+public class CompactProject
+{
+    /// <summary>
+    /// 主键
+    /// </summary>
+    [Key]
+    public string Id { get; set; } = string.Empty;
 
-            {
-                "Blazor",
-                (
-                    "使用Blazor Server构建个人项目及管理系统界面。",
-                    "Frontend",
-                    "ACTIVE"
-                )
-            }
-        };
-    }
+    /// <summary>
+    /// 项目名称
+    /// </summary>
+    public string Title { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 项目类型
+    /// </summary>
+    public string Type { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 项目年份
+    /// </summary>
+    public string Year { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 项目描述
+    /// </summary>
+    public string Desc { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 关联的技能列表
+    /// </summary>
+    public List<ProjectSkill> Skills { get; set; } = new();
+}
+
+/// <summary>
+/// 项目技能关联实体
+/// </summary>
+public class ProjectSkill
+{
+    /// <summary>
+    /// 主键
+    /// </summary>
+    [Key]
+    public int Id { get; set; }
+
+    /// <summary>
+    /// 技能名称
+    /// </summary>
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 所属项目ID（外键）
+    /// </summary>
+    public string ProjectId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 所属项目导航属性
+    /// </summary>
+    [ForeignKey(nameof(ProjectId))]
+    public CompactProject? Project { get; set; }
+}
+
+/// <summary>
+/// 技能诊断详情实体
+/// </summary>
+public class SkillDiagnostic
+{
+    /// <summary>
+    /// 主键
+    /// </summary>
+    [Key]
+    public int Id { get; set; }
+
+    /// <summary>
+    /// 技术标签名称
+    /// </summary>
+    public string TagName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 诊断描述
+    /// </summary>
+    public string Desc { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 统计/等级信息
+    /// </summary>
+    public string Stat { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 运行状态
+    /// </summary>
+    public string Status { get; set; } = string.Empty;
 }

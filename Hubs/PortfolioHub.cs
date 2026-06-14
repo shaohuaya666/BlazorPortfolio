@@ -2,11 +2,18 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace BlazorPortfolio.Hubs;
 
+/// <summary>
+/// 作品集 SignalR Hub，负责实时双向通信：
+/// 联系表单消息广播、系统日志推送、遥测数据同步
+/// </summary>
 public class PortfolioHub : Hub
 {
     /// <summary>
-    /// 发送联系表单消息
+    /// 发送联系表单消息，广播给所有连接客户端并返回成功确认给调用方
     /// </summary>
+    /// <param name="name">联系人姓名</param>
+    /// <param name="email">联系人邮箱</param>
+    /// <param name="message">消息内容</param>
     public async Task SendContactMessage(string name, string email, string message)
     {
         var timestamp = DateTime.Now.ToString("HH:mm:ss");
@@ -20,8 +27,9 @@ public class PortfolioHub : Hub
     }
 
     /// <summary>
-    /// 广播系统日志
+    /// 广播系统日志到所有连接的客户端
     /// </summary>
+    /// <param name="log">日志内容</param>
     public async Task BroadcastSystemLog(string log)
     {
         var timestamp = DateTime.Now.ToString("HH:mm:ss");
@@ -29,7 +37,7 @@ public class PortfolioHub : Hub
     }
 
     /// <summary>
-    /// 客户端连接时触发
+    /// 客户端连接时触发：广播上线通知
     /// </summary>
     public override async Task OnConnectedAsync()
     {
@@ -39,8 +47,9 @@ public class PortfolioHub : Hub
     }
 
     /// <summary>
-    /// 客户端断开连接时触发
+    /// 客户端断开连接时触发：广播离线通知
     /// </summary>
+    /// <param name="exception">断开异常（如有）</param>
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         var timestamp = DateTime.Now.ToString("HH:mm:ss");
@@ -49,8 +58,9 @@ public class PortfolioHub : Hub
     }
 
     /// <summary>
-    /// 模拟实时遥测数据推送
+    /// 模拟实时遥测数据推送，将频率广播给所有客户端
     /// </summary>
+    /// <param name="hz">遥测频率（Hz）</param>
     public async Task UpdateTelemetry(int hz)
     {
         await Clients.All.SendAsync("ReceiveTelemetry", hz);

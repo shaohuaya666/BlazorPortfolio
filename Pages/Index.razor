@@ -1,10 +1,10 @@
 @page "/"
-@rendermode @(new Microsoft.AspNetCore.Components.Web.InteractiveServerRenderMode())
 @using System.Threading
 @using BlazorPortfolio.Models
 @using Microsoft.AspNetCore.SignalR.Client
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
+@inject IPortfolioService PortfolioService
 @implements IAsyncDisposable
 
 <PageTitle>个人简历（Blazor Server）</PageTitle>
@@ -136,7 +136,7 @@
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            @foreach (var adv in PortfolioDataStore.Advantages)
+            @foreach (var adv in advantages)
             {
                 <div class="glass-card p-6 rounded-xl relative overflow-hidden group cursor-pointer transition-all">
                     <span class="font-mono text-[#4fdbc8] text-3xl font-extrabold opacity-40 block mb-4">
@@ -167,7 +167,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
             <!-- Left Grid Categories -->
             <div class="lg:col-span-7 space-y-6">
-                @foreach (var cat in PortfolioDataStore.SkillCategories)
+                @foreach (var cat in skillCategories)
                 {
                     <div class="space-y-3">
                         <h4 class="text-xs font-bold uppercase tracking-wider text-[#adc6ff]">
@@ -247,7 +247,7 @@
         </div>
 
         <div class="relative pl-8 border-l-2 border-slate-800 space-y-12">
-            @foreach (var work in PortfolioDataStore.WorkHistories)
+            @foreach (var work in workHistories)
             {
                 var workId = work.Id;
                 var isSelected = activeExp == workId;
@@ -272,11 +272,11 @@
                                 Achievements
                             </h4>
                             <ul class="space-y-2">
-                                @foreach (var ach in PortfolioDataStore.ExperienceAchievements[workId])
+                                @foreach (var ach in work.Achievements)
                                 {
                                     <li class="flex items-start gap-2 text-xs text-slate-400">
                                         <span class="text-[#4fdbc8]">•</span>
-                                        <span>@ach</span>
+                                        <span>@ach.Description</span>
                                     </li>
                                 }
                             </ul>
@@ -381,7 +381,7 @@
                     其他项目经历
                 </h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    @foreach (var project in PortfolioDataStore.CompactProjects)
+                    @foreach (var project in compactProjects)
                     {
                         <div class="glass-card p-6 rounded-xl border-l-4 border-l-[#4fdbc8] group cursor-pointer">
                             <div class="flex items-start justify-between mb-3">
@@ -406,7 +406,7 @@
                                 @foreach (var skill in project.Skills)
                                 {
                                     <span class="px-2 py-1 bg-slate-900/60 border border-slate-800 text-[#adc6ff] text-[10px] font-mono rounded">
-                                        @skill
+                                        @skill.Name
                                     </span>
                                 }
                             </div>
@@ -528,33 +528,129 @@
 }
 
 @code {
+    /// <summary>
+    /// SignalR 连接实例
+    /// </summary>
     private HubConnection? hubConnection;
+
+    /// <summary>
+    /// 当前选中的技术标签
+    /// </summary>
     private string selectedTag = ".NET 6/8";
+
+    /// <summary>
+    /// 当前选中的工作经历ID
+    /// </summary>
     private string activeExp = "work-1";
+
+    /// <summary>
+    /// 当前选中的PMIS标签页
+    /// </summary>
     private string selectedPmisTab = "flow";
+
+    /// <summary>
+    /// PMIS反馈信息
+    /// </summary>
     private string pmisFeedback = "项目立项流程配置完成，当前流程运行正常。";
 
+    /// <summary>
+    /// POS延迟阈值滑块值
+    /// </summary>
     private int latencySlider = 60;
+
+    /// <summary>
+    /// 设备在线计数
+    /// </summary>
     private int canteenActiveCount = 328;
 
+    /// <summary>
+    /// 简历模态框是否打开
+    /// </summary>
     private bool resumeModalOpen = false;
+
+    /// <summary>
+    /// 是否显示提交成功消息
+    /// </summary>
     private bool showSuccessMsg = false;
+
+    /// <summary>
+    /// 遥测频率（Hz）
+    /// </summary>
     private int telemetryHz = 60;
 
+    /// <summary>
+    /// 遥测HZ刷新定时器
+    /// </summary>
     private Timer? hzTimer;
+
+    /// <summary>
+    /// 在线计数动画定时器
+    /// </summary>
     private Timer? activeCounterTimer;
 
+    /// <summary>
+    /// SignalR 日志追踪列表
+    /// </summary>
     private List<string> traceLogs = new();
 
+    /// <summary>
+    /// 联系表单数据
+    /// </summary>
     private ContactForm contactForm = new();
 
+    /// <summary>
+    /// 从数据库加载的个人优势列表
+    /// </summary>
+    private List<Advantage> advantages = new();
+
+    /// <summary>
+    /// 从数据库加载的技术栈分类列表
+    /// </summary>
+    private List<SkillCategory> skillCategories = new();
+
+    /// <summary>
+    /// 从数据库加载的工作经历列表
+    /// </summary>
+    private List<WorkHistory> workHistories = new();
+
+    /// <summary>
+    /// 从数据库加载的项目经历列表
+    /// </summary>
+    private List<CompactProject> compactProjects = new();
+
+    /// <summary>
+    /// 从数据库加载的技能诊断字典（Key: 标签名）
+    /// </summary>
+    private Dictionary<string, SkillDiagnostic> skillDiagnostics = new();
+
+    /// <summary>
+    /// 当前选中标签的诊断信息
+    /// </summary>
     private (string Desc, string Stat, string Status) currentDiagnostic =>
-        PortfolioDataStore.SkillDiagnostics.TryGetValue(selectedTag, out var diag)
-            ? diag
+        skillDiagnostics.TryGetValue(selectedTag, out var diag)
+            ? (diag.Desc, diag.Stat, diag.Status)
             : ("熟练整合该技术栈，并支持快速构建其企业级交付模块。", "Mastery Level • Dynamic Profile", "MONITORED");
 
+    /// <summary>
+    /// 页面初始化：从 MySQL 加载数据、建立 SignalR 连接、启动模拟定时器
+    /// </summary>
     protected override async Task OnInitializedAsync()
     {
+        // 从 MySQL 数据库异步加载所有数据
+        try
+        {
+            advantages = await PortfolioService.GetAdvantagesAsync();
+            skillCategories = await PortfolioService.GetSkillCategoriesAsync();
+            workHistories = await PortfolioService.GetWorkHistoriesAsync();
+            compactProjects = await PortfolioService.GetCompactProjectsAsync();
+            skillDiagnostics = await PortfolioService.GetSkillDiagnosticsAsync();
+            AddLog("数据库数据加载完成。");
+        }
+        catch (Exception ex)
+        {
+            AddLog($"数据库加载失败: {ex.Message}");
+        }
+
         // 初始化 SignalR 连接
         hubConnection = new HubConnectionBuilder()
             .WithUrl(Navigation.ToAbsoluteUri("/portfolioHub"))
@@ -613,7 +709,7 @@
             AddLog($"SignalR 连接失败: {ex.Message}");
         }
 
-        // Start live simulation updates
+        // 启动实时遥测模拟更新定时器
         hzTimer = new Timer(_ =>
         {
             var r = new Random();
@@ -621,6 +717,7 @@
             InvokeAsync(StateHasChanged);
         }, null, 1500, 1500);
 
+        // 启动设备在线数增长动画定时器
         activeCounterTimer = new Timer(_ =>
         {
             if (canteenActiveCount < 2380)
@@ -634,33 +731,43 @@
         AddLog("个人简历系统初始化完成。");
     }
 
+    /// <summary>
+    /// 切换选中的技术标签，并广播到 SignalR
+    /// </summary>
+    /// <param name="tag">技术标签名称</param>
     private void SelectTag(string tag)
     {
         selectedTag = tag;
         AddLog($"DIAGNOSTICS: Target changed to \"{tag}\"");
 
-        // 通过 SignalR 广播系统日志
         if (hubConnection is not null && hubConnection.State == HubConnectionState.Connected)
         {
             _ = hubConnection.SendAsync("BroadcastSystemLog", $"技术栈切换至: {tag}");
         }
     }
 
+    /// <summary>
+    /// 切换当前展开的工作经历
+    /// </summary>
+    /// <param name="id">工作经历ID</param>
     private void SetActiveExp(string id)
     {
         activeExp = id;
         AddLog($"TIMELINE: Explored detailed records for cluster \"{id}\"");
 
-        // 通过 SignalR 广播系统日志
         if (hubConnection is not null && hubConnection.State == HubConnectionState.Connected)
         {
             _ = hubConnection.SendAsync("BroadcastSystemLog", $"查看工作经历: {id}");
         }
     }
 
+    /// <summary>
+    /// 切换PMIS功能标签页
+    /// </summary>
+    /// <param name="tab">标签页标识</param>
     private void SelectPmisTab(string tab)
     {
-        Console.WriteLine($"[DEBUG] SelectPmisTab called with: {tab}"); // 调试输出
+        Console.WriteLine($"[DEBUG] SelectPmisTab called with: {tab}");
         selectedPmisTab = tab;
 
         pmisFeedback = tab switch
@@ -674,25 +781,29 @@
 
         AddLog($"PMIS模块切换: {tab}");
 
-        // 通过 SignalR 广播系统日志
         if (hubConnection is not null && hubConnection.State == HubConnectionState.Connected)
         {
             _ = hubConnection.SendAsync("BroadcastSystemLog", $"PMIS 模块切换: {tab}");
         }
     }
 
+    /// <summary>
+    /// 切换简历模态框显示状态
+    /// </summary>
     private void ToggleResumeModal()
     {
         resumeModalOpen = !resumeModalOpen;
         AddLog($"MODAL_SNAPSHOT: Requested portable Snap CV binary. Toggle state: {resumeModalOpen}");
     }
 
+    /// <summary>
+    /// 处理联系表单提交，通过 SignalR 广播消息
+    /// </summary>
     private async Task HandleContactSubmit()
     {
         if (string.IsNullOrWhiteSpace(contactForm.Name) || string.IsNullOrWhiteSpace(contactForm.Email))
             return;
 
-        // 通过 SignalR 发送消息到服务器
         if (hubConnection is not null && hubConnection.State == HubConnectionState.Connected)
         {
             try
@@ -712,6 +823,10 @@
         }
     }
 
+    /// <summary>
+    /// 向日志追踪列表追加一条带时间戳的消息（最多保留10条）
+    /// </summary>
+    /// <param name="msg">日志消息</param>
     private void AddLog(string msg)
     {
         traceLogs.Add($"[{DateTime.Now:HH:mm:ss}] {msg}");
@@ -721,6 +836,9 @@
         }
     }
 
+    /// <summary>
+    /// 组件销毁时释放定时器和 SignalR 连接
+    /// </summary>
     public async ValueTask DisposeAsync()
     {
         hzTimer?.Dispose();
@@ -732,10 +850,18 @@
         }
     }
 
+    /// <summary>
+    /// 联系表单数据模型
+    /// </summary>
     public class ContactForm
     {
+        /// <summary>姓名</summary>
         public string Name { get; set; } = string.Empty;
+
+        /// <summary>邮箱</summary>
         public string Email { get; set; } = string.Empty;
+
+        /// <summary>消息内容</summary>
         public string Message { get; set; } = string.Empty;
     }
 }
