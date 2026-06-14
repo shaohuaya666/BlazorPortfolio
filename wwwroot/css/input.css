@@ -1,0 +1,131 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Material Symbols Outlined */
+@font-face {
+  font-family: 'Material Symbols Outlined';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url('../fonts/MaterialSymbolsOutlined-300.ttf') format('truetype');
+}
+
+/* Inter */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url('../fonts/Inter-Light.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../fonts/Inter-Regular.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('../fonts/Inter-Medium.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('../fonts/Inter-SemiBold.ttf') format('truetype');
+}
+
+/* JetBrains Mono */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../fonts/JetBrainsMono-Regular.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('../fonts/JetBrainsMono-Medium.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('../fonts/JetBrainsMono-Bold.ttf') format('truetype');
+}
+
+/* Geist */
+@font-face {
+  font-family: 'Geist';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../fonts/Geist-Regular.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Geist';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('../fonts/Geist-SemiBold.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Geist';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('../fonts/Geist-Bold.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Geist';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url('../fonts/Geist-ExtraBold.ttf') format('truetype');
+}
+
+/* Custom Styles */
+body {
+  background-color: #051424;
+  color: #d4e4fa;
+  font-family: "Inter", sans-serif;
+  scroll-behavior: smooth;
+}
+
+.glass-card {
+  background: rgba(30, 41, 59, 0.45);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(51, 65, 85, 0.4);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card:hover {
+  border-color: #3b82f6;
+  background: rgba(30, 41, 59, 0.75);
+  transform: translateY(-2px);
+}
+
+.skill-tag {
+  font-family: "JetBrains Mono", monospace;
+  border: 1px solid rgba(51, 65, 85, 0.5);
+  background: rgba(15, 23, 42, 0.3);
+}
+
+.core-mastery {
+  border-color: #4fdbc8;
+  color: #4fdbc8;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+}

@@ -405,3 +405,11 @@ FodyWeavers.xsd
 appsettings.Development.json
 appsettings.Production.json
 /Data/seed_data.sql
+
+# Node.js
+node_modules/
+package-lock.json
+
+# Tailwind CSS generated output (rebuild with npm run build:css)
+wwwroot/css/app.css
+/tailwindcss.exe
