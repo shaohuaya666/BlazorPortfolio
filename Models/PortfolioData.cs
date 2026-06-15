@@ -4,88 +4,63 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace BlazorPortfolio.Models;
 
 /// <summary>
+/// 实体标记接口，用于反射自动发现并注册到 DbContext
+/// </summary>
+public interface IEntity { }
+
+/// <summary>
 /// 个人优势实体
 /// </summary>
-public class Advantage
+[Table("Advantages")]
+public class Advantage : IEntity
 {
-    /// <summary>
-    /// 主键
-    /// </summary>
-    [Key]
+    [Key, MaxLength(50)]
     public string Id { get; set; } = string.Empty;
 
-    /// <summary>
-    /// 序号
-    /// </summary>
+    [MaxLength(10)]
     public string Num { get; set; } = string.Empty;
 
-    /// <summary>
-    /// 优势标题
-    /// </summary>
+    [MaxLength(200)]
     public string Title { get; set; } = string.Empty;
 
-    /// <summary>
-    /// 优势描述
-    /// </summary>
+    [MaxLength(500)]
     public string Desc { get; set; } = string.Empty;
 }
 
 /// <summary>
 /// 技术栈分类实体
 /// </summary>
-public class SkillCategory
+[Table("SkillCategories")]
+public class SkillCategory : IEntity
 {
-    /// <summary>
-    /// 主键
-    /// </summary>
     [Key]
     public int Id { get; set; }
 
-    /// <summary>
-    /// 分类名称
-    /// </summary>
+    [MaxLength(100)]
     public string Title { get; set; } = string.Empty;
 
-    /// <summary>
-    /// 主题色标识
-    /// </summary>
+    [MaxLength(50)]
     public string ThemeColor { get; set; } = "primary";
 
-    /// <summary>
-    /// 关联的技术标签列表
-    /// </summary>
     public List<TagInfo> Tags { get; set; } = new();
 }
 
 /// <summary>
 /// 技术标签实体
 /// </summary>
-public class TagInfo
+[Table("Tags")]
+public class TagInfo : IEntity
 {
-    /// <summary>
-    /// 主键
-    /// </summary>
     [Key]
     public int Id { get; set; }
 
-    /// <summary>
-    /// 标签名称
-    /// </summary>
+    [MaxLength(100)]
     public string Name { get; set; } = string.Empty;
 
-    /// <summary>
-    /// 是否为核心技能
-    /// </summary>
     public bool IsCore { get; set; }
 
-    /// <summary>
-    /// 所属分类ID（外键）
-    /// </summary>
     public int SkillCategoryId { get; set; }
 
-    /// <summary>
-    /// 所属分类导航属性
-    /// </summary>
     [ForeignKey(nameof(SkillCategoryId))]
     public SkillCategory? SkillCategory { get; set; }
 }
@@ -93,69 +68,44 @@ public class TagInfo
 /// <summary>
 /// 工作经历实体
 /// </summary>
-public class WorkHistory
+[Table("WorkHistories")]
+public class WorkHistory : IEntity
 {
-    /// <summary>
-    /// 主键
-    /// </summary>
-    [Key]
+    [Key, MaxLength(50)]
     public string Id { get; set; } = string.Empty;
 
-    /// <summary>
-    /// 公司名称
-    /// </summary>
+    [MaxLength(200)]
     public string Company { get; set; } = string.Empty;
 
-    /// <summary>
-    /// 职位
-    /// </summary>
+    [MaxLength(200)]
     public string Role { get; set; } = string.Empty;
 
-    /// <summary>
-    /// 任职期间
-    /// </summary>
+    [MaxLength(50)]
     public string Period { get; set; } = string.Empty;
 
-    /// <summary>
-    /// 工作描述
-    /// </summary>
+    [MaxLength(500)]
     public string Desc { get; set; } = string.Empty;
 
-    /// <summary>
-    /// 是否为当前在职
-    /// </summary>
     public bool IsCurrent { get; set; }
 
-    /// <summary>
-    /// 关联的成就列表
-    /// </summary>
     public List<Achievement> Achievements { get; set; } = new();
 }
 
 /// <summary>
 /// 工作成就实体
 /// </summary>
-public class Achievement
+[Table("Achievements")]
+public class Achievement : IEntity
 {
-    /// <summary>
-    /// 主键
-    /// </summary>
     [Key]
     public int Id { get; set; }
 
-    /// <summary>
-    /// 成就描述
-    /// </summary>
+    [MaxLength(500)]
     public string Description { get; set; } = string.Empty;
 
-    /// <summary>
-    /// 所属工作经历ID（外键）
-    /// </summary>
+    [MaxLength(50)]
     public string WorkHistoryId { get; set; } = string.Empty;
 
-    /// <summary>
-    /// 所属工作经历导航属性
-    /// </summary>
     [ForeignKey(nameof(WorkHistoryId))]
     public WorkHistory? WorkHistory { get; set; }
 }
@@ -163,64 +113,42 @@ public class Achievement
 /// <summary>
 /// 项目经历实体
 /// </summary>
-public class CompactProject
+[Table("CompactProjects")]
+public class CompactProject : IEntity
 {
-    /// <summary>
-    /// 主键
-    /// </summary>
-    [Key]
+    [Key, MaxLength(50)]
     public string Id { get; set; } = string.Empty;
 
-    /// <summary>
-    /// 项目名称
-    /// </summary>
+    [MaxLength(200)]
     public string Title { get; set; } = string.Empty;
 
-    /// <summary>
-    /// 项目类型
-    /// </summary>
+    [MaxLength(100)]
     public string Type { get; set; } = string.Empty;
 
-    /// <summary>
-    /// 项目年份
-    /// </summary>
+    [MaxLength(50)]
     public string Year { get; set; } = string.Empty;
 
-    /// <summary>
-    /// 项目描述
-    /// </summary>
+    [MaxLength(500)]
     public string Desc { get; set; } = string.Empty;
 
-    /// <summary>
-    /// 关联的技能列表
-    /// </summary>
     public List<ProjectSkill> Skills { get; set; } = new();
 }
 
 /// <summary>
 /// 项目技能关联实体
 /// </summary>
-public class ProjectSkill
+[Table("ProjectSkills")]
+public class ProjectSkill : IEntity
 {
-    /// <summary>
-    /// 主键
-    /// </summary>
     [Key]
     public int Id { get; set; }
 
-    /// <summary>
-    /// 技能名称
-    /// </summary>
+    [MaxLength(100)]
     public string Name { get; set; } = string.Empty;
 
-    /// <summary>
-    /// 所属项目ID（外键）
-    /// </summary>
+    [MaxLength(50)]
     public string ProjectId { get; set; } = string.Empty;
 
-    /// <summary>
-    /// 所属项目导航属性
-    /// </summary>
     [ForeignKey(nameof(ProjectId))]
     public CompactProject? Project { get; set; }
 }
@@ -228,31 +156,21 @@ public class ProjectSkill
 /// <summary>
 /// 技能诊断详情实体
 /// </summary>
-public class SkillDiagnostic
+[Table("SkillDiagnostics")]
+public class SkillDiagnostic : IEntity
 {
-    /// <summary>
-    /// 主键
-    /// </summary>
     [Key]
     public int Id { get; set; }
 
-    /// <summary>
-    /// 技术标签名称
-    /// </summary>
+    [MaxLength(100)]
     public string TagName { get; set; } = string.Empty;
 
-    /// <summary>
-    /// 诊断描述
-    /// </summary>
+    [MaxLength(500)]
     public string Desc { get; set; } = string.Empty;
 
-    /// <summary>
-    /// 统计/等级信息
-    /// </summary>
+    [MaxLength(100)]
     public string Stat { get; set; } = string.Empty;
 
-    /// <summary>
-    /// 运行状态
-    /// </summary>
+    [MaxLength(50)]
     public string Status { get; set; } = string.Empty;
 }
