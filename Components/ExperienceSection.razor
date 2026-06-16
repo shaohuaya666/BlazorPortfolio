@@ -1,0 +1,75 @@
+@using BlazorPortfolio.Models
+@using Microsoft.AspNetCore.SignalR.Client
+
+<section id="experience">
+    <div class="flex items-center gap-4 mb-10">
+        <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-[#4fdbc8] text-xl">work</span>
+            <h2 class="text-3xl font-bold text-white tracking-tight">工作经历</h2>
+        </div>
+        <div class="h-[1px] flex-grow bg-gradient-to-r from-slate-800 to-transparent"></div>
+    </div>
+
+    <div class="relative pl-8 border-l-2 border-slate-800 space-y-12">
+        @foreach (var work in Items)
+        {
+            var workId = work.Id;
+            var isSelected = _activeExp == workId;
+            <div @onclick="() => SetActiveExp(workId)" class="relative cursor-pointer group">
+                <div class="absolute -left-[41px] top-1.5 w-5 h-5 rounded-full border-4 border-[#051424] transition-all @(work.IsCurrent ? "bg-[#4fdbc8]" : "bg-slate-700")"></div>
+
+                <div class="glass-card p-6 rounded-xl transition-all @(isSelected ? "border-[#3b82f6] bg-slate-800/30" : "")">
+                    <div class="flex flex-col md:flex-row justify-between md:items-center gap-2 mb-4">
+                        <div>
+                            <h3 class="text-xl font-bold text-white">@work.Company</h3>
+                            <p class="text-[#4fdbc8] font-mono text-xs font-bold">@work.Role</p>
+                        </div>
+                        <span class="text-slate-400 font-mono text-xs bg-slate-900 border border-slate-800 px-3 py-1 rounded">
+                            @work.Period
+                        </span>
+                    </div>
+
+                    <p class="text-slate-300 text-sm leading-relaxed mb-6">@work.Desc</p>
+
+                    <div class="space-y-3 mt-4 border-t border-slate-800/50 pt-4">
+                        <h4 class="text-xs font-mono font-bold text-[#adc6ff] uppercase tracking-wider flex items-center gap-1">
+                            Achievements
+                        </h4>
+                        <ul class="space-y-2">
+                            @foreach (var ach in work.Achievements)
+                            {
+                                <li class="flex items-start gap-2 text-xs text-slate-400">
+                                    <span class="text-[#4fdbc8]">•</span>
+                                    <span>@ach.Description</span>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</section>
+
+@code {
+    [Parameter, EditorRequired]
+    public List<WorkHistory> Items { get; set; } = new();
+
+    /// <summary>
+    /// SignalR 连接（由父组件通过 CascadingValue 传入）
+    /// </summary>
+    [CascadingParameter]
+    public HubConnection? HubConnection { get; set; }
+
+    private string _activeExp = "work-1";
+
+    private void SetActiveExp(string id)
+    {
+        _activeExp = id;
+
+        if (HubConnection is not null && HubConnection.State == HubConnectionState.Connected)
+        {
+            _ = HubConnection.SendAsync("BroadcastSystemLog", $"查看工作经历: {id}");
+        }
+    }
+}

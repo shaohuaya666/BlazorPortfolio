@@ -1,0 +1,123 @@
+@using BlazorPortfolio.Models
+@using Microsoft.AspNetCore.SignalR.Client
+
+<section id="contact">
+    <div class="flex items-center gap-4 mb-10">
+        <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-[#4fdbc8] text-xl">mail</span>
+            <h2 class="text-3xl font-bold text-white tracking-tight">联系合作</h2>
+        </div>
+        <div class="h-[1px] flex-grow bg-gradient-to-r from-slate-800 to-transparent"></div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div class="lg:col-span-7 glass-card p-8 rounded-xl bg-gradient-to-b from-[#122131]/20 to-[#051424]">
+            <h3 class="text-xl font-bold mb-4">发送 System Request 握手包</h3>
+
+            <EditForm Model="@_contactForm" OnValidSubmit="HandleContactSubmit" Enhance="false" class="space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-mono text-slate-500 uppercase">姓名 *</label>
+                        <InputText @bind-Value="_contactForm.Name" class="w-full bg-[#051424] border border-slate-800 rounded p-2.5 text-xs text-white" />
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-mono text-slate-500 uppercase">邮件 *</label>
+                        <InputText @bind-Value="_contactForm.Email" class="w-full bg-[#051424] border border-slate-800 rounded p-2.5 text-xs text-white" />
+                    </div>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] font-mono text-slate-500 uppercase">内容 *</label>
+                    <InputTextArea @bind-Value="_contactForm.Message" rows="4" class="w-full bg-[#051424] border border-slate-800 rounded p-2.5 text-xs text-white resize-none" />
+                </div>
+
+                @if (ShowSuccessMsg)
+                {
+                    <div class="p-3 bg-[#4fdbc8]/15 border border-[#4fdbc8]/30 rounded text-xs text-[#4fdbc8] font-mono animate-pulse">
+                        ✓ SUCCESS_200: SignalR 实时握手包已传输 - 所有连接客户端已收到通知
+                    </div>
+                }
+
+                @if (HubConnection?.State != HubConnectionState.Connected)
+                {
+                    <div class="p-3 bg-yellow-500/15 border border-yellow-500/30 rounded text-xs text-yellow-400 font-mono">
+                        ⚠️ SignalR 未连接 - 实时通信功能不可用
+                    </div>
+                }
+
+                <button type="submit"
+                    class="w-full bg-[#bec6e0] text-[#283044] hover:bg-white font-mono font-bold text-xs uppercase tracking-widest py-3 rounded cursor-pointer">
+                    发送消息
+                </button>
+            </EditForm>
+        </div>
+
+        <!-- Debug live tracing log -->
+        <div class="lg:col-span-5 glass-card p-6 rounded-xl flex flex-col justify-between min-h-[220px]">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-2 font-mono">
+                <span class="text-xs text-slate-300">SignalR消息</span>
+                <span class="w-2 h-2 bg-green-500 rounded-full animate-ping"></span>
+            </div>
+            <div class="font-mono text-[10px] text-slate-400 space-y-1.5 flex-grow">
+                @if (TraceLogs.Count == 0)
+                {
+                    <p class="text-slate-600 italic">等待交互事件...</p>
+                }
+                @foreach (var log in TraceLogs)
+                {
+                    <p><span class="text-[#3b82f6]">&gt;&gt;</span> @log</p>
+                }
+            </div>
+        </div>
+    </div>
+</section>
+
+@code {
+    /// <summary>
+    /// SignalR 日志追踪列表（由父组件维护，传入显示）
+    /// </summary>
+    [Parameter]
+    public List<string> TraceLogs { get; set; } = new();
+
+    /// <summary>
+    /// 是否显示提交成功消息（由父组件 SignalR 回调控制）
+    /// </summary>
+    [Parameter]
+    public bool ShowSuccessMsg { get; set; }
+
+    /// <summary>
+    /// SignalR 连接（由父组件通过 CascadingValue 传入，用于发送消息）
+    /// </summary>
+    [CascadingParameter]
+    public HubConnection? HubConnection { get; set; }
+
+    private ContactForm _contactForm = new();
+
+    private async Task HandleContactSubmit()
+    {
+        if (string.IsNullOrWhiteSpace(_contactForm.Name) || string.IsNullOrWhiteSpace(_contactForm.Email))
+            return;
+
+        if (HubConnection is not null && HubConnection.State == HubConnectionState.Connected)
+        {
+            try
+            {
+                await HubConnection.SendAsync("SendContactMessage", _contactForm.Name, _contactForm.Email, _contactForm.Message);
+                _contactForm = new();
+            }
+            catch
+            {
+                // 发送失败由父组件日志记录
+            }
+        }
+    }
+
+    /// <summary>
+    /// 联系表单数据模型
+    /// </summary>
+    public class ContactForm
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Message { get; set; } = string.Empty;
+    }
+}

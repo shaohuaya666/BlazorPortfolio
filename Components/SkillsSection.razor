@@ -1,0 +1,114 @@
+@using BlazorPortfolio.Models
+@using Microsoft.AspNetCore.SignalR.Client
+
+<section id="skills">
+    <div class="flex items-center gap-4 mb-8">
+        <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-[#4fdbc8] text-xl">terminal</span>
+            <h2 class="text-3xl font-bold text-white tracking-tight">技术栈</h2>
+        </div>
+        <div class="h-[1px] flex-grow bg-gradient-to-r from-slate-800 to-transparent"></div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <!-- Left Grid Categories -->
+        <div class="lg:col-span-7 space-y-6">
+            @foreach (var cat in Categories)
+            {
+                <div class="space-y-3">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-[#adc6ff]">
+                        @cat.Title
+                    </h4>
+                    <div class="flex flex-wrap gap-2">
+                        @foreach (var tag in cat.Tags)
+                        {
+                            var isSelected = _selectedTag == tag.Name;
+                            <button @onclick="() => SelectTag(tag.Name)"
+                                class="skill-tag px-3.5 py-1.5 text-xs rounded transition-all cursor-pointer @(tag.IsCore ? "core-mastery" : "text-slate-400") @(isSelected ? "bg-blue-900/30 border-[#3b82f6] text-white" : "hover:bg-slate-800 hover:text-white")">
+                                @tag.Name
+                                @if (tag.IsCore)
+                                {
+                                    <span class="ml-1 text-[9px] bg-[#4fdbc8]/15 text-[#4fdbc8] px-1 rounded">Core</span>
+                                }
+                            </button>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Terminal output diagnostic console -->
+        <div class="lg:col-span-5">
+            <div class="glass-card rounded-xl p-6 bg-[#010f1f]/90 border border-slate-700/60 font-mono h-full flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full bg-red-400"></span>
+                            <span class="w-3 h-3 rounded-full bg-yellow-400"></span>
+                            <span class="w-3 h-3 rounded-full bg-green-400"></span>
+                            <span class="text-xs text-slate-400 ml-1">diagnostic_analyzer.sh</span>
+                        </div>
+                        <span class="text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded">dotnet8</span>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="flex justify-between text-xs">
+                            <span class="text-slate-500">SELECTED TARGET:</span>
+                            <span class="text-[#4fdbc8] font-bold">@_selectedTag</span>
+                        </div>
+                        <div class="flex justify-between text-xs">
+                            <span class="text-slate-500">PARSER STATUS:</span>
+                            <span class="text-[10px] bg-[#4fdbc8]/10 text-[#4fdbc8] px-2 py-0.5 rounded border border-[#4fdbc8]/20 animate-pulse">
+                                @_currentDiagnostic.Status
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-400 leading-relaxed border-t border-slate-800/80 pt-4">
+                            <span class="text-[#3b82f6]">&gt; </span>@_currentDiagnostic.Desc
+                        </p>
+                    </div>
+                </div>
+
+                <div class="mt-8 pt-4 border-t border-slate-800/60 space-y-2">
+                    <div class="flex justify-between text-[11px]">
+                        <span class="text-slate-500">CAPABILITY RATING:</span>
+                        <span class="text-[#adc6ff]">@_currentDiagnostic.Stat</span>
+                    </div>
+                    <div class="w-full bg-slate-900 h-2 rounded overflow-hidden">
+                        <div class="bg-gradient-to-r from-[#3b82f6] to-[#4fdbc8] h-full transition-all" style="width: 94%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@code {
+    [Parameter, EditorRequired]
+    public List<SkillCategory> Categories { get; set; } = new();
+
+    [Parameter, EditorRequired]
+    public Dictionary<string, SkillDiagnostic> Diagnostics { get; set; } = new();
+
+    /// <summary>
+    /// SignalR 连接（由父组件通过 CascadingValue 传入，用于广播技术栈切换事件）
+    /// </summary>
+    [CascadingParameter]
+    public HubConnection? HubConnection { get; set; }
+
+    private string _selectedTag = ".NET 6/8";
+
+    private (string Desc, string Stat, string Status) _currentDiagnostic =>
+        Diagnostics.TryGetValue(_selectedTag, out var diag)
+            ? (diag.Desc, diag.Stat, diag.Status)
+            : ("熟练整合该技术栈，并支持快速构建其企业级交付模块。", "Mastery Level • Dynamic Profile", "MONITORED");
+
+    private void SelectTag(string tag)
+    {
+        _selectedTag = tag;
+
+        if (HubConnection is not null && HubConnection.State == HubConnectionState.Connected)
+        {
+            _ = HubConnection.SendAsync("BroadcastSystemLog", $"技术栈切换至: {tag}");
+        }
+    }
+}

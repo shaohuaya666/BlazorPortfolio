@@ -1,0 +1,94 @@
+@using Microsoft.AspNetCore.SignalR.Client
+@implements IDisposable
+
+<header class="relative overflow-hidden min-h-[600px] flex items-center justify-center py-16">
+    <div class="absolute inset-0 bg-[#051424]">
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[radial-gradient(#1e293b_1.5px,transparent_1.5px)] [background-size:24px_24px] opacity-15"></div>
+    </div>
+
+    <div class="relative z-10 max-w-7xl px-6 text-center space-y-6">
+        <div class="flex flex-wrap justify-center gap-3">
+            <div class="inline-flex items-center gap-2 py-1 px-3 bg-[#4fdbc8]/10 border border-[#4fdbc8]/20 text-[#4fdbc8] font-mono text-xs rounded-full">
+                <span class="w-1.5 h-1.5 bg-[#4fdbc8] rounded-full animate-ping"></span>
+                .NET Core 8 Blazor Server Active
+            </div>
+
+            @if (ConnectionState == HubConnectionState.Connected)
+            {
+                <div class="inline-flex items-center gap-2 py-1 px-3 bg-green-500/10 border border-green-500/20 text-green-400 font-mono text-xs rounded-full">
+                    <span class="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
+                    SignalR 实时通信已连接
+                </div>
+            }
+            else if (ConnectionState == HubConnectionState.Connecting)
+            {
+                <div class="inline-flex items-center gap-2 py-1 px-3 bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 font-mono text-xs rounded-full">
+                    <span class="w-1.5 h-1.5 bg-yellow-400 rounded-full animate-bounce"></span>
+                    SignalR 连接中...
+                </div>
+            }
+            else
+            {
+                <div class="inline-flex items-center gap-2 py-1 px-3 bg-red-500/10 border border-red-500/20 text-red-400 font-mono text-xs rounded-full">
+                    <span class="w-1.5 h-1.5 bg-red-400 rounded-full"></span>
+                    SignalR 未连接
+                </div>
+            }
+        </div>
+
+        <h1 class="text-4xl sm:text-5xl md:text-6xl font-black leading-tight tracking-tight text-white max-w-5xl mx-auto">
+            全栈开发工程师 <br />
+            <span class="bg-gradient-to-r from-[#bec6e0] via-[#adc6ff] to-[#4fdbc8] bg-clip-text text-transparent">
+                专注数字化系统研发
+            </span>
+        </h1>
+
+        <p class="max-w-3xl mx-auto text-sm sm:text-base md:text-lg text-[#c6c6cd] leading-relaxed">
+            熟悉企业级高并发、复杂IoT集成、高可用架构设计，可交付可执行的后端原型代码，保证演示效果与设计文档一致。
+        </p>
+
+        <div class="flex flex-wrap gap-4 justify-center pt-2">
+            <a href="#projects"
+                class="bg-[#adc6ff] text-[#002e6a] hover:bg-white px-8 py-3.5 rounded-lg font-mono font-bold text-xs uppercase tracking-widest transition-all duration-150 active:scale-95 shadow-lg shadow-blue-500/10 flex items-center gap-1.5">
+                查看核心项目 Projects
+            </a>
+            <a href="#contact"
+                class="border border-[#909097]/40 text-[#d4e4fa] hover:bg-slate-800/40 px-8 py-3.5 rounded-lg font-mono font-bold text-xs uppercase tracking-widest transition-all duration-150 active:scale-95 flex items-center gap-1.5">
+                联系合作 Handshake
+            </a>
+        </div>
+
+        <div class="pt-8 max-w-2xl mx-auto">
+            <div class="text-[10px] text-slate-500 font-mono flex items-center justify-center gap-1.5">
+                <span class="material-symbols-outlined text-[12px] text-[#3b82f6]">cpu</span>
+                BLAZOR SIGNALR TELEMETRY: @_telemetryHz HZ • HIGHLY INTERACTIVE SIGNAL STATE
+            </div>
+        </div>
+    </div>
+</header>
+
+@code {
+    /// <summary>
+    /// SignalR 连接状态（由父组件传入）
+    /// </summary>
+    [Parameter]
+    public HubConnectionState ConnectionState { get; set; }
+
+    private int _telemetryHz = 60;
+    private Timer? _hzTimer;
+
+    protected override void OnInitialized()
+    {
+        _hzTimer = new Timer(_ =>
+        {
+            var r = new Random();
+            _telemetryHz = 60 + r.Next(-3, 4);
+            InvokeAsync(StateHasChanged);
+        }, null, 1500, 1500);
+    }
+
+    public void Dispose()
+    {
+        _hzTimer?.Dispose();
+    }
+}
