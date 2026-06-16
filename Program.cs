@@ -1,5 +1,6 @@
 using BlazorPortfolio.Data;
 using BlazorPortfolio.Hubs;
+using BlazorPortfolio.Middlewares;
 using BlazorPortfolio.Services;
 using BlazorPortfolio.Services.Impl;
 using Microsoft.EntityFrameworkCore;
@@ -37,6 +38,10 @@ builder.Services.AddAntiforgery(options =>
 var app = builder.Build();
 
 // 配置 HTTP 请求管道
+
+// 全局异常捕获中间件（放置在最前面以拦截所有下游异常）
+app.UseMiddleware<GlobalExceptionMiddleware>();
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
