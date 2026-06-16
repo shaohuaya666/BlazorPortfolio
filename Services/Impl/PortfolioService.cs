@@ -29,7 +29,7 @@ public class PortfolioService : IPortfolioService
     public async Task<List<Advantage>> GetAdvantagesAsync()
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
-        return await db.Advantages.AsNoTracking().ToListAsync();
+        return await db.Set<Advantage>().AsNoTracking().ToListAsync();
     }
 
     /// <summary>
@@ -38,7 +38,7 @@ public class PortfolioService : IPortfolioService
     public async Task<List<SkillCategory>> GetSkillCategoriesAsync()
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
-        return await db.SkillCategories
+        return await db.Set<SkillCategory>()
             .AsNoTracking()
             .Include(c => c.Tags)
             .ToListAsync();
@@ -50,7 +50,7 @@ public class PortfolioService : IPortfolioService
     public async Task<List<WorkHistory>> GetWorkHistoriesAsync()
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
-        return await db.WorkHistories
+        return await db.Set<WorkHistory>()
             .AsNoTracking()
             .Include(w => w.Achievements)
             .ToListAsync();
@@ -62,7 +62,7 @@ public class PortfolioService : IPortfolioService
     public async Task<List<CompactProject>> GetCompactProjectsAsync()
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
-        return await db.CompactProjects
+        return await db.Set<CompactProject>()
             .AsNoTracking()
             .Include(p => p.Skills)
             .ToListAsync();
@@ -74,7 +74,7 @@ public class PortfolioService : IPortfolioService
     public async Task<Dictionary<string, SkillDiagnostic>> GetSkillDiagnosticsAsync()
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
-        var list = await db.SkillDiagnostics.AsNoTracking().ToListAsync();
+        var list = await db.Set<SkillDiagnostic>().AsNoTracking().ToListAsync();
         return list.ToDictionary(d => d.TagName);
     }
 }

@@ -1,0 +1,37 @@
+@using BlazorPortfolio.Models
+
+<section>
+    <div class="flex items-center gap-4 mb-8">
+        <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-[#4fdbc8] text-xl">award_star</span>
+            <h2 class="text-3xl font-bold text-white tracking-tight">个人优势</h2>
+        </div>
+        <div class="h-[1px] flex-grow bg-gradient-to-r from-slate-800 to-transparent"></div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        @foreach (var adv in Items)
+        {
+            <div class="glass-card p-6 rounded-xl relative overflow-hidden group cursor-pointer transition-all">
+                <span class="font-mono text-[#4fdbc8] text-3xl font-extrabold opacity-40 block mb-4">
+                    @adv.Num
+                </span>
+                <h3 class="text-lg font-bold text-white mb-2">
+                    @adv.Title
+                </h3>
+                <p class="text-[#c6c6cd] text-sm leading-relaxed">
+                    @adv.Desc
+                </p>
+                <div class="absolute bottom-0 left-0 h-[2px] bg-gradient-to-r from-[#3b82f6] to-[#4fdbc8] w-0 group-hover:w-full transition-all duration-300"></div>
+            </div>
+        }
+    </div>
+</section>
+
+@code {
+    /// <summary>
+    /// 个人优势数据列表（由父组件从数据库加载后传入）
+    /// </summary>
+    [Parameter, EditorRequired]
+    public List<Advantage> Items { get; set; } = new();
+}
