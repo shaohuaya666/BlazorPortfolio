@@ -42,10 +42,12 @@ var app = builder.Build();
 // 全局异常捕获中间件（放置在最前面以拦截所有下游异常）
 app.UseMiddleware<GlobalExceptionMiddleware>();
 
+// 始终使用自定义错误页面（开发/生产统一），而不是默认开发者异常页
+app.UseExceptionHandler("/Error", createScopeForErrors: true);
+
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    // 默认 HSTS 有效期为 30 天，生产环境可按需调整
+    // HSTS 仅在生产环境启用
     app.UseHsts();
 }
 
