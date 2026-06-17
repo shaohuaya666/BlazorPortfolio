@@ -32,21 +32,38 @@ public class GlobalExceptionMiddleware
         catch (Exception ex)
         {
             _logger.LogError(ex, "未处理的异常: {Message}", ex.Message);
-            await HandleExceptionAsync(context, ex);
+
+            // SignalR / Blazor WebSocket 连接异常让框架自行处理
+            if (IsSignalRRequest(context) || IsBlazorWebSocket(context))
+            {
+                return;
+            }
+
+            // API 请求（JSON 预期）返回统一错误 JSON
+            if (IsApiRequest(context))
+            {
+                await HandleExceptionAsync(context, ex);
+                return;
+            }
+
+            // Blazor 页面请求：重新抛出异常，交给 UseExceptionHandler("/Error") 跳转错误页面
+            throw;
         }
+    }
+
+    /// <summary>
+    /// 判断是否为 API 请求（期望返回 JSON 而非 HTML 页面）
+    /// </summary>
+    private static bool IsApiRequest(HttpContext context)
+    {
+        return context.Request.Path.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase)
+               || context.Request.Headers.Accept.ToString().Contains("application/json", StringComparison.OrdinalIgnoreCase);
     }
 
     private async Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
         context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
         context.Response.ContentType = "application/json; charset=utf-8";
-
-        // 判断是否为 SignalR 或 Blazor WebSocket 请求，这些不应返回 JSON
-        if (IsSignalRRequest(context) || IsBlazorWebSocket(context))
-        {
-            // WebSocket 连接异常让框架自行处理
-            return;
-        }
 
         var response = new ErrorResponse
         {

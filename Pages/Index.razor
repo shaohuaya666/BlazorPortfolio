@@ -92,19 +92,13 @@
     protected override async Task OnInitializedAsync()
     {
         // 从数据库异步加载所有数据
-        try
-        {
-            advantages = await PortfolioService.GetAdvantagesAsync();
-            skillCategories = await PortfolioService.GetSkillCategoriesAsync();
-            workHistories = await PortfolioService.GetWorkHistoriesAsync();
-            compactProjects = await PortfolioService.GetCompactProjectsAsync();
-            skillDiagnostics = await PortfolioService.GetSkillDiagnosticsAsync();
-            AddLog("数据库数据加载完成。");
-        }
-        catch (Exception ex)
-        {
-            AddLog($"数据库加载失败: {ex.Message}");
-        }
+        // TODO: 测试错误页面 - 临时去掉 try-catch 让异常向上抛
+        advantages = await PortfolioService.GetAdvantagesAsync();
+        skillCategories = await PortfolioService.GetSkillCategoriesAsync();
+        workHistories = await PortfolioService.GetWorkHistoriesAsync();
+        compactProjects = await PortfolioService.GetCompactProjectsAsync();
+        skillDiagnostics = await PortfolioService.GetSkillDiagnosticsAsync();
+        AddLog("数据库数据加载完成。");
 
         // 初始化 SignalR 连接
         hubConnection = new HubConnectionBuilder()

@@ -1,0 +1,115 @@
+@page "/error"
+
+<PageTitle>出错了 - 个人简历</PageTitle>
+
+<div class="min-h-screen bg-[#051424] text-[#d4e4fa] font-sans antialiased flex items-center justify-center relative overflow-hidden">
+    
+    @* 背景发光效果 *@
+    <div class="absolute top-0 left-1/3 w-[500px] h-[500px] bg-red-950/20 rounded-full blur-[140px] pointer-events-none"></div>
+    <div class="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-orange-950/15 rounded-full blur-[160px] pointer-events-none"></div>
+
+    <div class="relative z-10 text-center px-6 max-w-3xl mx-auto">
+        
+        @* 错误图标 *@
+        <div class="mb-8">
+            <svg class="w-28 h-28 mx-auto text-red-400/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
+                    d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+            </svg>
+        </div>
+
+        @* 错误标题 *@
+        <h1 class="text-6xl font-bold text-white mb-4 tracking-tight">
+            哎呀!
+        </h1>
+        <h2 class="text-2xl font-semibold text-red-300/90 mb-6">
+            发生了一些意外错误
+        </h2>
+
+        <p class="text-lg text-[#94a8c4] mb-8 leading-relaxed">
+            服务器遇到了一些问题，请稍后再试。<br />
+            您可以尝试刷新页面，或返回首页。
+        </p>
+
+        @* 操作按钮 *@
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-10">
+            <button @onclick="RefreshPage"
+                    class="px-8 py-3 bg-sky-600 hover:bg-sky-500 text-white font-medium rounded-xl
+                           transition-all duration-300 hover:shadow-lg hover:shadow-sky-600/25
+                           active:scale-95 cursor-pointer">
+                <span class="flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182" />
+                    </svg>
+                    刷新页面
+                </span>
+            </button>
+            <a href="/"
+               class="px-8 py-3 bg-white/10 hover:bg-white/15 text-[#d4e4fa] font-medium rounded-xl
+                      border border-white/10 hover:border-white/20
+                      transition-all duration-300 active:scale-95 cursor-pointer no-underline">
+                <span class="flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="m2.25 12 8.954-8.955a1.232 1.232 0 0 1 1.759 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                    </svg>
+                    返回首页
+                </span>
+            </a>
+        </div>
+
+        @* 开发环境下显示异常详情 *@
+        @if (isDevelopment && ErrorDetail is not null)
+        {
+            <details class="mt-8 text-left max-w-2xl mx-auto">
+                <summary class="cursor-pointer text-sm text-[#64748b] hover:text-[#94a8c4] transition-colors mb-4 select-none">
+                    查看错误详情（仅开发环境可见）
+                </summary>
+                <div class="bg-[#0a1a30] border border-red-900/30 rounded-xl p-6 overflow-auto max-h-[400px]">
+                    <pre class="text-xs text-red-300/70 font-mono whitespace-pre-wrap break-all leading-relaxed">@ErrorDetail</pre>
+                </div>
+            </details>
+        }
+
+        @* 页脚提示 *@
+        <p class="mt-16 text-sm text-[#475569]">
+            如果问题持续存在，请联系网站管理员
+        </p>
+    </div>
+</div>
+
+@code {
+    /// <summary>
+    /// 是否处于开发环境
+    /// </summary>
+    [Inject] private IWebHostEnvironment Env { get; set; } = default!;
+
+    /// <summary>
+    /// 用于页面导航和刷新
+    /// </summary>
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
+
+    /// <summary>
+    /// 异常详情字符串（仅开发环境展示）
+    /// </summary>
+    private string? ErrorDetail { get; set; }
+
+    /// <summary>
+    /// 是否为开发环境
+    /// </summary>
+    private bool isDevelopment;
+
+    protected override void OnInitialized()
+    {
+        isDevelopment = Env.IsDevelopment();
+    }
+
+    /// <summary>
+    /// 刷新当前页面
+    /// </summary>
+    private void RefreshPage()
+    {
+        Navigation.Refresh(forceReload: true);
+    }
+}
