@@ -14,6 +14,9 @@ var builder = WebApplication.CreateBuilder(args);
 // 切换环境：在 launchSettings.json 中修改 ASPNETCORE_ENVIRONMENT
 //   可选值：Development / Staging / Production
 
+// 注册内存缓存服务（用于本地缓存数据库查询结果）
+builder.Services.AddMemoryCache();
+
 // 注册 Blazor Server 交互式组件
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -25,6 +28,9 @@ builder.Services.AddSignalR();
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContextFactory<PortfolioDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
+
+// 注册通用缓存服务（Singleton，与 IMemoryCache 生命周期一致）
+builder.Services.AddSingleton<CacheService>();
 
 // 通过接口注入注册 PortfolioService
 builder.Services.AddScoped<IPortfolioService, PortfolioService>();
