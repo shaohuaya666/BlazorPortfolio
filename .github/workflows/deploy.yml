@@ -71,22 +71,15 @@ jobs:
           fi
 
           echo "=== Step 2: Stopping application ==="
-          # 查找进程ID
-          PID=$(pgrep -f "dotnet /var/www/blazor/BlazorPortfolio.dll" || echo "")
-          if [ -n "$PID" ]; then
-            echo "Found running application with PID: $PID"
-            kill -15 $PID
-            sleep 2
-            # 如果还在运行，强制杀死
-            if ps -p $PID > /dev/null 2>&1; then
-              echo "Force killing..."
-              kill -9 $PID
-            fi
-            echo "Application stopped"
+          # 停止 systemd 服务
+          if systemctl is-active --quiet blazor.service; then
+            echo "Stopping blazor.service..."
+            systemctl stop blazor.service
+            echo "Service stopped"
           else
-            echo "No running application found"
+            echo "Service is not running"
           fi
-          sleep 1
+          sleep 2
 
           echo "=== Step 3: Deploying new version ==="
           mkdir -p $DEPLOY_PATH
@@ -102,25 +95,23 @@ jobs:
           echo "Permissions set"
 
           echo "=== Step 5: Starting application ==="
-          cd $DEPLOY_PATH
-          > /var/log/blazorportfolio.log
-
-          echo "Launching dotnet..."
-          nohup /root/.dotnet/dotnet BlazorPortfolio.dll > /var/log/blazorportfolio.log 2>&1 &
-          APP_PID=$!
-          echo "Started with PID: $APP_PID"
+          echo "Starting blazor.service..."
+          systemctl start blazor.service
+          sleep 3
 
           echo "=== Step 6: Verifying startup ==="
-          sleep 5
-
-          if pgrep -f "dotnet.*BlazorPortfolio.dll" > /dev/null; then
+          if systemctl is-active --quiet blazor.service; then
             echo "✅ Application started successfully!"
-            echo "Process ID: $(pgrep -f 'dotnet.*BlazorPortfolio.dll')"
+            systemctl status blazor.service --no-pager
+            echo ""
             echo "Listening on port 5000"
           else
             echo "❌ Failed to start application"
-            echo "Last 30 lines of log:"
-            tail -n 30 /var/log/blazorportfolio.log
+            echo "Service status:"
+            systemctl status blazor.service --no-pager
+            echo ""
+            echo "Last 30 lines of journal:"
+            journalctl -u blazor.service -n 30 --no-pager
             exit 1
           fi
 
