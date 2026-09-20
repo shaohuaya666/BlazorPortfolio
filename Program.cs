@@ -32,6 +32,12 @@ builder.Services.AddDbContextFactory<PortfolioDbContext>(options =>
 // 注册通用缓存服务（Singleton，与 IMemoryCache 生命周期一致）
 builder.Services.AddSingleton<CacheService>();
 
+// 注册消息队列服务（Singleton，SignalR Hub 和后台服务共享同一实例）
+builder.Services.AddSingleton<MessageQueueService>();
+
+// 注册消息持久化后台服务（Hosted Service，定时从队列取数据写入数据库）
+builder.Services.AddHostedService<MessagePersistService>();
+
 // 通过接口注入注册 PortfolioService
 builder.Services.AddScoped<IPortfolioService, PortfolioService>();
 
