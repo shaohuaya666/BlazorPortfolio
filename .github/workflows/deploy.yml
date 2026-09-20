@@ -1,0 +1,101 @@
+name: Deploy to Aliyun Server
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build
+      run: dotnet build --configuration Release --no-restore
+
+    - name: Publish
+      run: dotnet publish --configuration Release --no-build --output ./publish
+
+    - name: Create deployment package
+      run: |
+        cd publish
+        tar -czf ../deploy.tar.gz *
+        cd ..
+
+    - name: Deploy to Aliyun Server
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.ALIYUN_HOST }}
+        username: ${{ secrets.ALIYUN_USERNAME }}
+        key: ${{ secrets.ALIYUN_SSH_KEY }}
+        port: ${{ secrets.ALIYUN_PORT }}
+        source: "deploy.tar.gz"
+        target: "/tmp"
+
+    - name: Execute deployment script
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.ALIYUN_HOST }}
+        username: ${{ secrets.ALIYUN_USERNAME }}
+        key: ${{ secrets.ALIYUN_SSH_KEY }}
+        port: ${{ secrets.ALIYUN_PORT }}
+        script: |
+          # 设置变量
+          APP_NAME="blazor"
+          DEPLOY_PATH="/var/www/$APP_NAME"
+          BACKUP_PATH="/var/backups/$APP_NAME"
+
+          # 创建备份
+          if [ -d "$DEPLOY_PATH" ]; then
+            echo "Creating backup..."
+            mkdir -p $BACKUP_PATH
+            tar -czf $BACKUP_PATH/backup_$(date +%Y%m%d_%H%M%S).tar.gz -C $DEPLOY_PATH .
+
+            # 只保留最近5个备份
+            cd $BACKUP_PATH
+            ls -t | tail -n +6 | xargs -r rm
+          fi
+
+          # 停止应用（查找并杀死现有的 dotnet 进程）
+          echo "Stopping application..."
+          pkill -f "dotnet /var/www/blazor/BlazorPortfolio.dll" || true
+          sleep 2
+
+          # 部署新版本
+          echo "Deploying new version..."
+          mkdir -p $DEPLOY_PATH
+          tar -xzf /tmp/deploy.tar.gz -C $DEPLOY_PATH
+          rm /tmp/deploy.tar.gz
+
+          # 设置权限
+          chmod +x $DEPLOY_PATH/BlazorPortfolio
+
+          # 启动应用（使用 nohup 在后台运行）
+          echo "Starting application..."
+          cd $DEPLOY_PATH
+          nohup /root/.dotnet/dotnet BlazorPortfolio.dll > /var/log/blazorportfolio.log 2>&1 &
+
+          # 等待应用启动
+          sleep 3
+
+          # 检查应用是否启动成功
+          if pgrep -f "dotnet.*BlazorPortfolio.dll" > /dev/null; then
+            echo "Application started successfully!"
+            echo "Process ID: $(pgrep -f 'dotnet.*BlazorPortfolio.dll')"
+          else
+            echo "Failed to start application. Check logs at /var/log/blazorportfolio.log"
+            exit 1
+          fi
+
+          echo "Deployment completed successfully!"
