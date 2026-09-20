@@ -51,62 +51,66 @@ jobs:
         key: ${{ secrets.ALIYUN_SSH_KEY }}
         port: ${{ secrets.ALIYUN_PORT }}
         script: |
+          set -e  # 遇到错误立即退出
+
           # 设置变量
           APP_NAME="blazor"
           DEPLOY_PATH="/var/www/$APP_NAME"
           BACKUP_PATH="/var/backups/$APP_NAME"
 
-          # 创建备份
+          echo "=== Step 1: Creating backup ==="
           if [ -d "$DEPLOY_PATH" ]; then
             echo "Creating backup..."
             mkdir -p $BACKUP_PATH
-            tar -czf $BACKUP_PATH/backup_$(date +%Y%m%d_%H%M%S).tar.gz -C $DEPLOY_PATH .
+            tar -czf $BACKUP_PATH/backup_$(date +%Y%m%d_%H%M%S).tar.gz -C $DEPLOY_PATH . || echo "Backup failed but continuing..."
 
             # 只保留最近5个备份
             cd $BACKUP_PATH
-            ls -t | tail -n +6 | xargs -r rm
+            ls -t | tail -n +6 | xargs -r rm || true
+            echo "Backup completed"
+          else
+            echo "No existing deployment found, skipping backup"
           fi
 
-          # 停止应用（查找并杀死现有的 dotnet 进程）
-          echo "Stopping application..."
-          pkill -f "dotnet /var/www/blazor/BlazorPortfolio.dll" || true
+          echo "=== Step 2: Stopping application ==="
+          pkill -f "dotnet /var/www/blazor/BlazorPortfolio.dll" || echo "No running application found"
           sleep 3
+          echo "Application stopped"
 
-          # 部署新版本
-          echo "Deploying new version..."
+          echo "=== Step 3: Deploying new version ==="
           mkdir -p $DEPLOY_PATH
+          echo "Extracting files to $DEPLOY_PATH..."
           tar -xzf /tmp/deploy.tar.gz -C $DEPLOY_PATH
+          echo "Files extracted successfully"
           rm /tmp/deploy.tar.gz
+          echo "Cleanup completed"
 
-          # 设置权限
+          echo "=== Step 4: Setting permissions ==="
           chmod +x $DEPLOY_PATH/BlazorPortfolio || true
+          ls -lh $DEPLOY_PATH/BlazorPortfolio
+          echo "Permissions set"
 
-          # 启动应用（使用 nohup 在后台运行）
-          echo "Starting application..."
+          echo "=== Step 5: Starting application ==="
           cd $DEPLOY_PATH
-
-          # 清空旧日志
           > /var/log/blazorportfolio.log
 
-          # 启动应用
+          echo "Launching dotnet..."
           nohup /root/.dotnet/dotnet BlazorPortfolio.dll > /var/log/blazorportfolio.log 2>&1 &
           APP_PID=$!
           echo "Started with PID: $APP_PID"
 
-          # 等待应用启动
-          echo "Waiting for application to start..."
+          echo "=== Step 6: Verifying startup ==="
           sleep 5
 
-          # 检查应用是否启动成功
           if pgrep -f "dotnet.*BlazorPortfolio.dll" > /dev/null; then
             echo "✅ Application started successfully!"
             echo "Process ID: $(pgrep -f 'dotnet.*BlazorPortfolio.dll')"
             echo "Listening on port 5000"
           else
             echo "❌ Failed to start application"
-            echo "Last 20 lines of log:"
-            tail -n 20 /var/log/blazorportfolio.log
+            echo "Last 30 lines of log:"
+            tail -n 30 /var/log/blazorportfolio.log
             exit 1
           fi
 
-          echo "Deployment completed successfully!"
+          echo "=== Deployment completed successfully! ==="
