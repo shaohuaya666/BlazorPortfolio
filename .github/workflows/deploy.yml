@@ -71,8 +71,22 @@ jobs:
           fi
 
           echo "=== Step 2: Stopping application ==="
-          pkill -f "dotnet /var/www/blazor/BlazorPortfolio.dll" 2>/dev/null && echo "Application stopped" || echo "No running application found"
-          sleep 3
+          # 查找进程ID
+          PID=$(pgrep -f "dotnet /var/www/blazor/BlazorPortfolio.dll" || echo "")
+          if [ -n "$PID" ]; then
+            echo "Found running application with PID: $PID"
+            kill -15 $PID
+            sleep 2
+            # 如果还在运行，强制杀死
+            if ps -p $PID > /dev/null 2>&1; then
+              echo "Force killing..."
+              kill -9 $PID
+            fi
+            echo "Application stopped"
+          else
+            echo "No running application found"
+          fi
+          sleep 1
 
           echo "=== Step 3: Deploying new version ==="
           mkdir -p $DEPLOY_PATH
