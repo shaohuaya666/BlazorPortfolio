@@ -70,7 +70,7 @@ jobs:
           # 停止应用（查找并杀死现有的 dotnet 进程）
           echo "Stopping application..."
           pkill -f "dotnet /var/www/blazor/BlazorPortfolio.dll" || true
-          sleep 2
+          sleep 3
 
           # 部署新版本
           echo "Deploying new version..."
@@ -79,22 +79,33 @@ jobs:
           rm /tmp/deploy.tar.gz
 
           # 设置权限
-          chmod +x $DEPLOY_PATH/BlazorPortfolio
+          chmod +x $DEPLOY_PATH/BlazorPortfolio || true
 
           # 启动应用（使用 nohup 在后台运行）
           echo "Starting application..."
           cd $DEPLOY_PATH
+
+          # 清空旧日志
+          > /var/log/blazorportfolio.log
+
+          # 启动应用
           nohup /root/.dotnet/dotnet BlazorPortfolio.dll > /var/log/blazorportfolio.log 2>&1 &
+          APP_PID=$!
+          echo "Started with PID: $APP_PID"
 
           # 等待应用启动
-          sleep 3
+          echo "Waiting for application to start..."
+          sleep 5
 
           # 检查应用是否启动成功
           if pgrep -f "dotnet.*BlazorPortfolio.dll" > /dev/null; then
-            echo "Application started successfully!"
+            echo "✅ Application started successfully!"
             echo "Process ID: $(pgrep -f 'dotnet.*BlazorPortfolio.dll')"
+            echo "Listening on port 5000"
           else
-            echo "Failed to start application. Check logs at /var/log/blazorportfolio.log"
+            echo "❌ Failed to start application"
+            echo "Last 20 lines of log:"
+            tail -n 20 /var/log/blazorportfolio.log
             exit 1
           fi
 
