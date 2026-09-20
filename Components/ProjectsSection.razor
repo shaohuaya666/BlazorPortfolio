@@ -16,7 +16,7 @@
         <div class="glass-card p-8 rounded-xl bg-gradient-to-r from-[#0f172a]/70 to-[#051424] relative" style="overflow: visible;">
             <div class="flex flex-col sm:flex-row justify-between items-start gap-4 mb-6">
                 <div>
-                    <span class="px-2 bg-slate-700 text-[#adc6ff] text-[10px] font-mono rounded">CORE DESIGN</span>
+                    <span class="px-2 bg-slate-700 text-[#adc6ff] text-[10px] font-mono rounded">核心设计</span>
                     <h3 class="text-2xl font-bold text-white mt-2">PMIS 研发项目管理平台</h3>
                 </div>
             </div>
@@ -69,13 +69,13 @@
                     <!-- Live range component -->
                     <div class="p-4 bg-slate-950/60 rounded border border-slate-900 font-mono text-xs space-y-3">
                         <div class="flex justify-between">
-                            <span>POS LATENCY THRESHOLD:</span>
+                            <span>设备响应延迟阈值:</span>
                             <span class="text-[#4fdbc8]">@_latencySlider ms</span>
                         </div>
                         <input type="range" min="10" max="100" @bind="_latencySlider" @bind:event="oninput"
                             class="w-full" />
                         <div class="flex justify-between text-[10px] text-slate-500">
-                            <span>@(_latencySlider > 60 ? "⚠️ DETECTOR TIMEOUT POTENTIAL" : "🟢 STABLE")</span>
+                            <span>@(_latencySlider > 60 ? "⚠️ 检测器可能超时" : "🟢 稳定")</span>
                         </div>
                     </div>
                 </div>
