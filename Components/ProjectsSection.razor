@@ -98,7 +98,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 @foreach (var project in Items)
                 {
-                    <div class="glass-card p-6 rounded-xl border-l-4 border-l-[#4fdbc8] group cursor-pointer">
+                    <div class="glass-card p-6 rounded-xl border-l-4 border-l-[#4fdbc8] group cursor-pointer flex flex-col h-full">
                         <div class="flex items-start justify-between mb-3">
                             <div class="flex-grow">
                                 <div class="flex items-center gap-2 mb-2">
@@ -113,11 +113,11 @@
                             </div>
                         </div>
 
-                        <p class="text-sm text-slate-300 leading-relaxed mb-4">
+                        <p class="text-sm text-slate-300 leading-relaxed mb-4 line-clamp-4">
                             @project.Desc
                         </p>
 
-                        <div class="flex flex-wrap gap-2 pt-3 border-t border-slate-800/50">
+                        <div class="flex flex-wrap gap-2 pt-3 border-t border-slate-800/50 mt-auto">
                             @foreach (var skill in project.Skills)
                             {
                                 <span class="px-2 py-1 bg-slate-900/60 border border-slate-800 text-[#adc6ff] text-[10px] font-mono rounded">
