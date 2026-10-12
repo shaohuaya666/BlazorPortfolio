@@ -98,7 +98,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 @foreach (var project in Items)
                 {
-                    <div class="glass-card p-6 rounded-xl border-l-4 border-l-[#4fdbc8] group cursor-pointer">
+                    <div class="glass-card p-6 rounded-xl border-l-4 border-l-[#4fdbc8] group cursor-pointer relative hover:z-30 flex flex-col h-full">
                         <div class="flex items-start justify-between mb-3">
                             <div class="flex-grow">
                                 <div class="flex items-center gap-2 mb-2">
@@ -113,17 +113,28 @@
                             </div>
                         </div>
 
-                        <p class="text-sm text-slate-300 leading-relaxed mb-4">
+                        <p class="text-sm text-slate-300 leading-relaxed mb-4 line-clamp-4">
                             @project.Desc
                         </p>
 
-                        <div class="flex flex-wrap gap-2 pt-3 border-t border-slate-800/50">
+                        <div class="flex flex-wrap gap-2 pt-3 border-t border-slate-800/50 mt-auto">
                             @foreach (var skill in project.Skills)
                             {
                                 <span class="px-2 py-1 bg-slate-900/60 border border-slate-800 text-[#adc6ff] text-[10px] font-mono rounded">
                                     @skill.Name
                                 </span>
                             }
+                        </div>
+
+                        <!-- 悬停浮层：显示完整项目描述 -->
+                        <div class="absolute inset-0 z-30 hidden group-hover:flex flex-col p-6 rounded-xl bg-[#010f1f]/95 backdrop-blur-md border border-[#3b82f6]/40 shadow-2xl">
+                            <div class="flex items-center gap-2 mb-3 flex-shrink-0">
+                                <span class="material-symbols-outlined text-[#4fdbc8] text-base">description</span>
+                                <span class="text-xs font-mono text-[#4fdbc8] truncate">@project.Title</span>
+                            </div>
+                            <div class="flex-1 min-h-0 overflow-y-auto pr-1">
+                                <p class="text-sm text-slate-300 leading-relaxed whitespace-pre-wrap">@project.Desc</p>
+                            </div>
                         </div>
                     </div>
                 }
