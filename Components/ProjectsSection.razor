@@ -98,7 +98,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 @foreach (var project in Items)
                 {
-                    <div class="glass-card p-6 rounded-xl border-l-4 border-l-[#4fdbc8] group cursor-pointer relative hover:z-30 flex flex-col h-full">
+                    <div class="glass-card p-6 rounded-xl border-l-4 border-l-[#4fdbc8] group cursor-pointer relative hover:z-30 flex flex-col h-full" style="min-height: 264px;">
                         <div class="flex items-start justify-between mb-3">
                             <div class="flex-grow">
                                 <div class="flex items-center gap-2 mb-2">
@@ -113,7 +113,8 @@
                             </div>
                         </div>
 
-                        <p class="text-sm text-slate-300 leading-relaxed mb-4 line-clamp-4">
+                        <!-- 固定占据 4 行高度：保证所有卡片描述区高度一致（4 × 1.625 × 0.875rem ≈ 5.75rem） -->
+                        <p class="text-sm text-slate-300 leading-relaxed mb-4 line-clamp-4" style="min-height: 5.75rem;">
                             @project.Desc
                         </p>
 
