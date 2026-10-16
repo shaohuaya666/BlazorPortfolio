@@ -2,6 +2,34 @@
 @using Microsoft.AspNetCore.SignalR.Client
 @implements IDisposable
 
+<style>
+    /* 悬停浮层内部滚动条：细窄、半透明、贴合暗色主题 */
+    .project-desc-scroll {
+        padding-right: 0.5rem; /* 文字与滚动条留出间距 */
+        scrollbar-width: thin; /* Firefox */
+        scrollbar-color: rgba(79, 219, 200, 0.35) transparent; /* Firefox */
+    }
+
+    .project-desc-scroll::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+
+    .project-desc-scroll::-webkit-scrollbar-track {
+        background: transparent;
+        margin: 6px 0;
+    }
+
+    .project-desc-scroll::-webkit-scrollbar-thumb {
+        background: rgba(79, 219, 200, 0.35);
+        border-radius: 9999px;
+    }
+
+    .project-desc-scroll::-webkit-scrollbar-thumb:hover {
+        background: rgba(79, 219, 200, 0.7);
+    }
+</style>
+
 <section id="projects">
     <div class="flex items-center gap-4 mb-10">
         <div class="flex items-center gap-2">
@@ -98,7 +126,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 @foreach (var project in Items)
                 {
-                    <div class="glass-card p-6 rounded-xl border-l-4 border-l-[#4fdbc8] group cursor-pointer flex flex-col h-full">
+                    <div class="glass-card p-6 rounded-xl border-l-4 border-l-[#4fdbc8] group cursor-pointer relative hover:z-30 flex flex-col h-full" style="min-height: 264px;">
                         <div class="flex items-start justify-between mb-3">
                             <div class="flex-grow">
                                 <div class="flex items-center gap-2 mb-2">
@@ -113,7 +141,8 @@
                             </div>
                         </div>
 
-                        <p class="text-sm text-slate-300 leading-relaxed mb-4 line-clamp-4">
+                        <!-- 固定占据 4 行高度，保证所有卡片描述区高度一致 -->
+                        <p class="text-sm text-slate-300 leading-relaxed mb-4 line-clamp-4" style="min-height: 5.75rem;">
                             @project.Desc
                         </p>
 
@@ -124,6 +153,17 @@
                                     @skill.Name
                                 </span>
                             }
+                        </div>
+
+                        <!-- 悬停浮层：显示完整项目描述（内部滚动条已美化） -->
+                        <div class="absolute inset-0 z-30 hidden group-hover:flex flex-col p-6 rounded-xl bg-[#010f1f]/95 backdrop-blur-md border border-[#3b82f6]/40 shadow-2xl">
+                            <div class="flex items-center gap-2 mb-3 flex-shrink-0">
+                                <span class="material-symbols-outlined text-[#4fdbc8] text-base">description</span>
+                                <span class="text-xs font-mono text-[#4fdbc8] truncate">@project.Title</span>
+                            </div>
+                            <div class="project-desc-scroll flex-1 min-h-0 overflow-y-auto">
+                                <p class="text-sm text-slate-300 leading-relaxed whitespace-pre-wrap">@project.Desc</p>
+                            </div>
                         </div>
                     </div>
                 }
