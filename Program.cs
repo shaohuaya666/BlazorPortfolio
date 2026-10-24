@@ -3,7 +3,9 @@ using BlazorPortfolio.Hubs;
 using BlazorPortfolio.Middlewares;
 using BlazorPortfolio.Services;
 using BlazorPortfolio.Services.Impl;
+using BlazorPortfolio.Services.Caching;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,8 +16,13 @@ var builder = WebApplication.CreateBuilder(args);
 // 切换环境：在 launchSettings.json 中修改 ASPNETCORE_ENVIRONMENT
 //   可选值：Development / Staging / Production
 
-// 注册内存缓存服务（用于本地缓存数据库查询结果）
+// 注册内存缓存服务：
+// 1. Redis 正常时作为降级后备（见 CacheService.SelectProvider）；
+// 2. Redis 未配置 / 熔断时作为主实现，保证应用始终可用。
 builder.Services.AddMemoryCache();
+
+// 绑定缓存配置（appsettings.json 的 "Cache" 节点，可由环境变量 Cache__Redis__ConnectionString 覆盖）
+builder.Services.Configure<CacheOptions>(builder.Configuration.GetSection(CacheOptions.SectionName));
 
 // 注册 Blazor Server 交互式组件
 builder.Services.AddRazorComponents()
@@ -29,8 +36,18 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContextFactory<PortfolioDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
+// 注册缓存访问层的两种实现（Redis 为主实现，Memory 为降级实现）
+// Redis 采用懒连接：Redis 不可用不影响应用启动，运行时会自动降级
+builder.Services.AddSingleton<RedisCacheProvider>();
+builder.Services.AddSingleton<MemoryCacheProvider>();
+
 // 注册通用缓存服务（Singleton，与 IMemoryCache 生命周期一致）
-builder.Services.AddSingleton<CacheService>();
+// 上层业务仅依赖 CacheService，是否走 Redis 由配置与运行时健康状态决定
+builder.Services.AddSingleton(sp => new CacheService(
+    sp.GetRequiredService<RedisCacheProvider>(),
+    sp.GetRequiredService<MemoryCacheProvider>(),
+    sp.GetRequiredService<IOptions<CacheOptions>>(),
+    sp.GetRequiredService<ILogger<CacheService>>()));
 
 // 注册消息队列服务（Singleton，SignalR Hub 和后台服务共享同一实例）
 builder.Services.AddSingleton<MessageQueueService>();
