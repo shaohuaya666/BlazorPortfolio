@@ -46,5 +46,10 @@
 
 @code {
     /// <summary>后台管理地址（来自配置 AdminPortal:Url）</summary>
-    private readonly string? _adminUrl = Configuration?["AdminPortal:Url"];
+    private string? _adminUrl;
+
+    protected override void OnInitialized()
+    {
+        _adminUrl = Configuration["AdminPortal:Url"];
+    }
 }
