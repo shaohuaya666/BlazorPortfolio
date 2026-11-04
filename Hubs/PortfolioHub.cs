@@ -1,5 +1,6 @@
 using BlazorPortfolio.Models;
 using BlazorPortfolio.Services;
+using BlazorPortfolio.Services.VisitTracking;
 using Microsoft.AspNetCore.SignalR;
 
 namespace BlazorPortfolio.Hubs;
@@ -77,12 +78,13 @@ public class PortfolioHub : Hub
             $"[{timestamp}] 新用户已连接 SignalR Hub (Connection ID: {Context.ConnectionId[..Math.Min(8, Context.ConnectionId.Length)]}...)");
         await base.OnConnectedAsync();
 
-        // 入队列持久化
+        // 入队列持久化（附带真实客户端 IP，便于定位异常连接来源）
         await _queue.EnqueueAsync(new ChatMessage
         {
             MessageType = "Connection",
             Content = $"用户已连接",
             ConnectionId = Context.ConnectionId,
+            ClientIp = ResolveClientIp(),
             Timestamp = now
         });
     }
@@ -98,12 +100,13 @@ public class PortfolioHub : Hub
         await Clients.All.SendAsync("ReceiveSystemLog", $"[{timestamp}] 用户已断开连接");
         await base.OnDisconnectedAsync(exception);
 
-        // 入队列持久化
+        // 入队列持久化（附带真实客户端 IP，便于定位异常连接来源）
         await _queue.EnqueueAsync(new ChatMessage
         {
             MessageType = "Disconnection",
             Content = exception?.Message ?? "正常断开",
             ConnectionId = Context.ConnectionId,
+            ClientIp = ResolveClientIp(),
             Timestamp = now
         });
     }
@@ -114,5 +117,21 @@ public class PortfolioHub : Hub
     public async Task UpdateTelemetry(int hz)
     {
         await Clients.All.SendAsync("ReceiveTelemetry", hz);
+    }
+
+    /// <summary>
+    /// 从 Hub 的握手上下文中取客户端 IP；ForwardedHeaders 已在管道最前完成代理还原。
+    /// 取不到时返回 null，不影响原有连接日志写入。
+    /// </summary>
+    private string? ResolveClientIp()
+    {
+        try
+        {
+            return ClientIpResolver.Format(Context.GetHttpContext()?.Connection.RemoteIpAddress);
+        }
+        catch
+        {
+            return null;
+        }
     }
 }
