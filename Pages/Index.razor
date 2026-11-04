@@ -32,7 +32,7 @@
 
         <ExperienceSection Items="workHistories" />
 
-        <ProjectsSection Items="compactProjects" />
+        <ProjectsSection Items="compactProjects" FeaturedProjects="featuredProjects" />
 
         <ContactSection TraceLogs="traceLogs" ShowSuccessMsg="showSuccessMsg" />
     </main>
@@ -82,6 +82,11 @@
     private List<CompactProject> compactProjects = new();
 
     /// <summary>
+    /// 从数据库加载的重点项目列表（含标签页与量化指标）
+    /// </summary>
+    private List<FeaturedProject> featuredProjects = new();
+
+    /// <summary>
     /// 从数据库加载的技能诊断字典（Key: 标签名）
     /// </summary>
     private Dictionary<string, SkillDiagnostic> skillDiagnostics = new();
@@ -97,6 +102,7 @@
         skillCategories = await PortfolioService.GetSkillCategoriesAsync();
         workHistories = await PortfolioService.GetWorkHistoriesAsync();
         compactProjects = await PortfolioService.GetCompactProjectsAsync();
+        featuredProjects = await PortfolioService.GetFeaturedProjectsAsync();
         skillDiagnostics = await PortfolioService.GetSkillDiagnosticsAsync();
         AddLog("数据库数据加载完成。");
 

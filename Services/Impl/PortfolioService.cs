@@ -78,6 +78,23 @@ public class PortfolioService : IPortfolioService
     }
 
     /// <summary>
+    /// 异步获取重点项目列表，同时预加载关联的标签页与量化指标（带缓存）
+    /// </summary>
+    public Task<List<FeaturedProject>> GetFeaturedProjectsAsync()
+    {
+        return _cacheService.GetOrSetAsync<List<FeaturedProject>>("Portfolio_FeaturedProjects", async () =>
+        {
+            await using var db = await _dbFactory.CreateDbContextAsync();
+            return await db.Set<FeaturedProject>()
+                .AsNoTracking()
+                .Include(p => p.Tabs)
+                .Include(p => p.Metrics)
+                .OrderBy(p => p.SortOrder)
+                .ToListAsync();
+        });
+    }
+
+    /// <summary>
     /// 异步获取技能诊断字典，以标签名称作为 Key 方便前端按名称查找（带缓存）
     /// </summary>
     public Task<Dictionary<string, SkillDiagnostic>> GetSkillDiagnosticsAsync()

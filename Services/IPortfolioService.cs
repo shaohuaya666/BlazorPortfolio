@@ -34,6 +34,12 @@ public interface IPortfolioService
     Task<List<CompactProject>> GetCompactProjectsAsync();
 
     /// <summary>
+    /// 异步获取重点项目列表（含关联标签页与量化指标，按 SortOrder 排序）
+    /// </summary>
+    [Cached(Key = "Portfolio_FeaturedProjects", DurationMinutes = 30)]
+    Task<List<FeaturedProject>> GetFeaturedProjectsAsync();
+
+    /// <summary>
     /// 异步获取技能诊断字典（Key: 标签名）
     /// </summary>
     [Cached(Key = "Portfolio_SkillDiagnostics", DurationMinutes = 30)]
