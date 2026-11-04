@@ -30,6 +30,16 @@ public class MessageQueueService
     }
 
     /// <summary>
+    /// 尝试以非阻塞方式入队（生产者端）。
+    /// 用于访问采集等不允许阻塞请求线程的场景：队列已满时立即返回 false，由调用方决定是否丢弃。
+    /// </summary>
+    /// <returns>入队成功返回 true；队列已满或已关闭返回 false</returns>
+    public bool TryEnqueue(ChatMessage message)
+    {
+        return _channel.Writer.TryWrite(message);
+    }
+
+    /// <summary>
     /// 从队列中批量读取消息（消费者端）。
     /// 当队列为空时立即返回空集合，不会阻塞等待。
     /// </summary>

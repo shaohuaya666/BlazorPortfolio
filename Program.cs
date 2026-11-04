@@ -1,9 +1,12 @@
+using System.Net;
 using BlazorPortfolio.Data;
 using BlazorPortfolio.Hubs;
 using BlazorPortfolio.Middlewares;
 using BlazorPortfolio.Services;
 using BlazorPortfolio.Services.Impl;
 using BlazorPortfolio.Services.Caching;
+using BlazorPortfolio.Services.VisitTracking;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
@@ -55,6 +58,36 @@ builder.Services.AddSingleton<MessageQueueService>();
 // 注册消息持久化后台服务（Hosted Service，定时从队列取数据写入数据库）
 builder.Services.AddHostedService<MessagePersistService>();
 
+// ---- 访问来源 IP 采集 ----
+// 绑定采集配置（appsettings.json 的 "VisitTracking" 节点，可由环境变量 VisitTracking__xxx 覆盖）
+var visitTrackingOptions = builder.Configuration
+    .GetSection(VisitTrackingOptions.SectionName)
+    .Get<VisitTrackingOptions>() ?? new VisitTrackingOptions();
+builder.Services.Configure<VisitTrackingOptions>(builder.Configuration.GetSection(VisitTrackingOptions.SectionName));
+
+// 配置转发头：只采纳来自可信代理的 X-Forwarded-For / X-Forwarded-Proto，
+// 由框架把结果写回 Connection.RemoteIpAddress，业务代码无需手工解析转发头。
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.ForwardLimit = Math.Max(1, visitTrackingOptions.ForwardedHeadersLimit);
+
+    // 清空默认的 KnownProxies/KnownNetworks，完全由配置决定信任范围，避免默认开放过宽
+    options.KnownProxies.Clear();
+    options.KnownNetworks.Clear();
+
+    foreach (var proxy in visitTrackingOptions.TrustedProxies ?? [])
+    {
+        if (IPEndPoint.TryParse(proxy, out var endpoint))
+        {
+            options.KnownProxies.Add(endpoint.Address);
+        }
+    }
+});
+
+// 注册访问记录保留期清理后台服务
+builder.Services.AddHostedService<VisitLogCleanupService>();
+
 // 通过接口注入注册 PortfolioService
 builder.Services.AddScoped<IPortfolioService, PortfolioService>();
 
@@ -67,6 +100,9 @@ builder.Services.AddAntiforgery(options =>
 var app = builder.Build();
 
 // 配置 HTTP 请求管道
+
+// 转发头处理必须位于管道最前，否则后续取到的是反向代理地址而非真实客户端 IP
+app.UseForwardedHeaders();
 
 // 全局异常捕获中间件（放置在最前面以拦截所有下游异常）
 app.UseMiddleware<GlobalExceptionMiddleware>();
@@ -82,6 +118,10 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+
+// 访问来源采集：位于静态文件之后，避免静态资源与探测请求污染访问记录
+app.UseMiddleware<VisitLoggingMiddleware>();
+
 app.UseAntiforgery();
 
 // 映射 Blazor Server 交互式渲染模式
