@@ -77,6 +77,20 @@ public class PortfolioDbContext : DbContext
             .WithOne(s => s.Project)
             .HasForeignKey(s => s.ProjectId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // FeaturedProject -> FeaturedProjectTab (1:N)
+        modelBuilder.Entity<FeaturedProject>()
+            .HasMany(e => e.Tabs)
+            .WithOne(t => t.Project)
+            .HasForeignKey(t => t.ProjectId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // FeaturedProject -> FeaturedProjectMetric (1:N)
+        modelBuilder.Entity<FeaturedProject>()
+            .HasMany(e => e.Metrics)
+            .WithOne(m => m.Project)
+            .HasForeignKey(m => m.ProjectId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 
     /// <summary>

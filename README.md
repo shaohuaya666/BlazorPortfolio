@@ -113,6 +113,85 @@ dotnet watch run
 
 连接字符串配置位于 `appsettings.json` 的 `ConnectionStrings.DefaultConnection`。
 
+### 访问来源 IP 采集（VisitTracking）
+
+系统会把页面访问与 SignalR 连接事件的客户端 IP 写入 `ChatMessages` 表，用于定位异常连接来源。写入沿用现有"内存队列 + 后台批量持久化"通道，页面请求不直接访问数据库。
+
+采集内容：
+
+| 字段 | 说明 |
+| --- | --- |
+| `ClientIp` | 客户端真实 IP（明文，IPv4/IPv6） |
+| `Timestamp` | 访问/连接时间 |
+| `MessageType` | `PageView`（页面访问）/ `Connection`（连接）/ `Disconnection`（断开）/ `SystemLog` |
+| `Content` | 页面访问时为请求路径（不含查询串） |
+| `ConnectionId` | Hub 连接事件对应的 SignalR 连接 ID |
+
+不记录静态资源、`/_blazor`、`/portfolioHub`、`/_framework`、健康检查与 WebSocket 升级请求。
+
+配置项（`appsettings.json` 的 `VisitTracking` 节点，可用环境变量覆盖，如 `VisitTracking__RetentionDays=30`）：
+
+| 配置项 | 默认值 | 说明 |
+| --- | --- | --- |
+| `Enabled` | `true` | 采集总开关，关闭后不再写入页面访问记录 |
+| `RecordPageViews` | `true` | 是否记录页面访问（Hub 连接事件不受影响） |
+| `RetentionDays` | `90` | 保留天数，`<= 0` 表示永久保留并禁用自动清理 |
+| `CleanupIntervalHours` | `24` | 清理任务执行间隔（小时） |
+| `CleanupBatchSize` | `1000` | 单批删除条数 |
+| `MaxCleanupBatchesPerRound` | `10` | 单轮最多执行批次数 |
+| `ForwardedHeadersLimit` | `2` | 信任的代理跳数 |
+| `TrustedProxies` | `["127.0.0.1", "::1"]` | 受信任的代理地址，仅这些来源的转发头才会被采纳 |
+| `RealIpHeader` | 未配置 | 可选的真实 IP 头（如 `CF-Connecting-IP`），仅接入 CDN 时启用 |
+
+真实 IP 获取：
+
+- 应用已启用 `ForwardedHeaders`（`X-Forwarded-For` + `X-Forwarded-Proto`），业务代码不手工解析转发头。
+- nginx 反代需保留 `proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;`（`deploy/nginx.conf` 已包含）。
+- 当 nginx 与应用不在同一台机器时，必须把 nginx 出口地址加入 `TrustedProxies`，否则取到的是代理地址。
+- 切勿把 `TrustedProxies` 配置为 `0.0.0.0/0` 或过宽的网段，否则客户端可伪造 `X-Forwarded-For`。
+
+数据库变更（已上线环境）：
+
+```bash
+# 在发布新版本之前执行，脚本幂等可重复运行
+mysql -u<user> -p <database> < deploy/sql/20261104_add_chatmessage_clientip.sql
+```
+
+全新环境仍按上文 `dotnet ef migrations add InitialCreate` + `dotnet ef database update` 建库，`ClientIp` 列与索引由实体定义自动生成。
+
+## 🔐 隐私与数据合规说明
+
+- **采集目的**：仅用于访问量统计与异常连接来源排查（如爬虫、健康检查、重连风暴），不用于广告投放或用户画像。
+- **最小化采集**：不记录 Cookie、请求体、查询串与 User-Agent；仅记录 IP、时间、路径与连接 ID。
+- **明文存储风险**：IP 属于个人数据，当前按需求以明文入库。请确保数据库不对外网开放，使用最小权限账号，并限制备份文件的访问范围。
+- **保留期限**：默认 90 天后由 `VisitLogCleanupService` 自动删除非业务记录；`Contact` 联系表单消息不会被清理。可用 `VisitTracking__RetentionDays` 调整。
+- **随时关闭**：设置 `VisitTracking__Enabled=false` 可停止采集（需重启应用），已存数据仍按保留期清理。
+- **告知义务**：面向公众部署时，建议在站点隐私说明中告知 IP 采集目的、范围与保留期限，并提供联系方式。
+
+按 IP 查询与统计示例：
+
+```sql
+-- 最近 7 天访问量 Top 20 的 IP
+SELECT ClientIp, COUNT(*) AS VisitCount, MIN(Timestamp) AS FirstSeen, MAX(Timestamp) AS LastSeen
+FROM ChatMessages
+WHERE MessageType = 'PageView'
+  AND Timestamp >= NOW() - INTERVAL 7 DAY
+GROUP BY ClientIp
+ORDER BY VisitCount DESC
+LIMIT 20;
+
+-- 排查短命连接：连接后 2 秒内即断开的记录
+SELECT c.ClientIp, c.Timestamp AS ConnectedAt, d.Timestamp AS DisconnectedAt
+FROM ChatMessages c
+JOIN ChatMessages d
+  ON c.ConnectionId = d.ConnectionId
+ AND c.MessageType = 'Connection'
+ AND d.MessageType = 'Disconnection'
+WHERE d.Timestamp <= DATE_ADD(c.Timestamp, INTERVAL 2 SECOND)
+ORDER BY c.Timestamp DESC
+LIMIT 50;
+```
+
 ### 自定义内容
 
 要自定义网站内容，有两种方式：

@@ -1,0 +1,204 @@
+@using BlazorPortfolio.Models
+@using Microsoft.AspNetCore.SignalR.Client
+@implements IDisposable
+
+@* 重点项目卡片：内容全部来自 FeaturedProject 实体（含标签页与量化指标），无硬编码文案 *@
+
+<div class="glass-card p-8 rounded-xl relative @CardClass" style="overflow: visible;">
+    <div class="@(IsSideLayout ? "grid grid-cols-1 lg:grid-cols-12 gap-8" : "")">
+        <div class="@(IsSideLayout ? "lg:col-span-7 space-y-5" : "space-y-5")">
+            <!-- 卡片头部 -->
+            <div class="flex flex-col sm:flex-row justify-between items-start gap-4">
+                <div>
+                    <span class="px-2 bg-slate-700 text-[#adc6ff] text-[10px] font-mono rounded">@Project.Badge</span>
+                    <h3 class="text-2xl font-bold text-white mt-2">@Project.Title</h3>
+                    @if (TechTags.Count > 0)
+                    {
+                        <p class="text-[10px] font-mono text-slate-500 mt-1">@string.Join(" / ", TechTags)</p>
+                    }
+                </div>
+            </div>
+
+            <p class="text-[#c6c6cd] text-sm leading-relaxed">
+                @Project.Description
+            </p>
+
+            @* 交互式标签页：职责明细面板 *@
+            @if (SelectedTab is not null)
+            {
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4" style="position: relative; z-index: 20;">
+                    @foreach (var tab in OrderedTabs)
+                    {
+                        var isSelected = tab.TabKey == SelectedTab.TabKey;
+                        <button type="button"
+                                @onclick="@(() => SelectTab(tab))"
+                                @onclick:stopPropagation="true"
+                                style="pointer-events: auto; position: relative; z-index: 30;"
+                                class="p-4 rounded-lg border text-left cursor-pointer transition-all @(isSelected ? "bg-[#1c2b3c] border-[#3b82f6]" : "bg-slate-900/40 border-slate-800 hover:bg-slate-800/60 hover:border-slate-700")">
+                            <span class="text-xs uppercase font-mono tracking-wider font-bold text-[#4fdbc8] pointer-events-none">
+                                @tab.Label
+                            </span>
+                        </button>
+                    }
+                </div>
+
+                <div class="bg-[#010f1f]/80 p-4 rounded border border-slate-800 font-mono text-xs">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="text-[#3b82f6]">&gt;&gt; </span>
+                        <span class="text-[#4fdbc8] font-bold">负责模块：@SelectedTab.Title</span>
+                    </div>
+                    <ul class="space-y-1.5 text-slate-300">
+                        @foreach (var line in SelectedTabLines)
+                        {
+                            <li class="flex gap-2 leading-relaxed">
+                                <span class="text-[#4fdbc8] shrink-0">▸</span>
+                                <span>@line</span>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            }
+
+            @* 挑战与成果 *@
+            @if (HasChallenge || HasResult)
+            {
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    @if (HasChallenge)
+                    {
+                        <div class="p-4 bg-slate-950/60 rounded border border-slate-800">
+                            <p class="text-[10px] font-mono text-[#f59e0b] mb-2">挑战与解决方案</p>
+                            <p class="text-xs text-slate-400 leading-relaxed">@Project.Challenge</p>
+                        </div>
+                    }
+                    @if (HasResult)
+                    {
+                        <div class="p-4 bg-slate-950/60 rounded border border-slate-800">
+                            <p class="text-[10px] font-mono text-[#4fdbc8] mb-2">成果与影响</p>
+                            <p class="text-xs text-slate-400 leading-relaxed">@Project.Result</p>
+                        </div>
+                    }
+                </div>
+            }
+
+            @* 交互演示：设备响应延迟滑块 *@
+            @if (ShowSlider)
+            {
+                <div class="p-4 bg-slate-950/60 rounded border border-slate-900 font-mono text-xs space-y-3">
+                    <div class="flex justify-between">
+                        <span>设备响应延迟阈值:</span>
+                        <span class="text-[#4fdbc8]">@_latencySlider ms</span>
+                    </div>
+                    <input type="range" min="10" max="100" @bind="_latencySlider" @bind:event="oninput"
+                           class="w-full" />
+                    <div class="flex justify-between text-[10px] text-slate-500">
+                        <span>@(_latencySlider > 60 ? "⚠️ 检测器可能超时" : "🟢 稳定")</span>
+                    </div>
+                </div>
+            }
+        </div>
+
+        @* 侧栏：设备计数演示 + 量化指标 *@
+        @if (IsSideLayout)
+        {
+            <div class="lg:col-span-5 bg-slate-950/40 p-6 rounded-xl flex flex-col justify-between border border-slate-800 space-y-4">
+                @if (ShowCounter)
+                {
+                    <div class="text-center py-4 bg-[#010f1f] rounded border border-slate-900">
+                        <p class="text-mono text-[10px] text-slate-500">设备在线数</p>
+                        <p class="text-3xl font-bold text-[#4fdbc8] mt-2">@_activeCount+</p>
+                    </div>
+                }
+                @if (OrderedMetrics.Count > 0)
+                {
+                    <div class="grid grid-cols-2 gap-3">
+                        @foreach (var metric in OrderedMetrics)
+                        {
+                            <div class="p-3 bg-[#010f1f] rounded border border-slate-900 text-center">
+                                <p class="text-lg font-bold text-white font-mono">@metric.Value</p>
+                                <p class="text-[10px] text-slate-500 mt-1">@metric.Label</p>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public FeaturedProject Project { get; set; } = new();
+
+    /// <summary>是否为首张卡片（决定配色方案）</summary>
+    [Parameter]
+    public bool IsFirst { get; set; }
+
+    [CascadingParameter]
+    public HubConnection? HubConnection { get; set; }
+
+    private string? _selectedTabKey;
+    private int _latencySlider = 60;
+    private int _activeCount = 328;
+    private Timer? _activeCounterTimer;
+
+    private string CardClass => IsFirst
+        ? "bg-gradient-to-r from-[#0f172a]/70 to-[#051424]"
+        : "border-t-4 border-t-[#4fdbc8] bg-gradient-to-b from-[#122131]/30 to-[#051424]";
+
+    /// <summary>存在量化指标或设备计数演示时启用左右分栏布局</summary>
+    private bool IsSideLayout => Project.Metrics.Count > 0 || ShowCounter;
+
+    private bool ShowSlider => Project.Demo is "latency" or "both";
+
+    private bool ShowCounter => Project.Demo is "devices" or "both";
+
+    private bool HasChallenge => !string.IsNullOrWhiteSpace(Project.Challenge);
+
+    private bool HasResult => !string.IsNullOrWhiteSpace(Project.Result);
+
+    private List<string> TechTags => Project.TechStack
+        .Split('|', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        .ToList();
+
+    private List<FeaturedProjectTab> OrderedTabs => Project.Tabs.OrderBy(t => t.SortOrder).ToList();
+
+    private List<FeaturedProjectMetric> OrderedMetrics => Project.Metrics.OrderBy(m => m.SortOrder).ToList();
+
+    /// <summary>当前选中的标签页，默认取排序第一项</summary>
+    private FeaturedProjectTab? SelectedTab =>
+        OrderedTabs.FirstOrDefault(t => t.TabKey == _selectedTabKey) ?? OrderedTabs.FirstOrDefault();
+
+    private string[] SelectedTabLines => (SelectedTab?.Lines ?? string.Empty)
+        .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+    protected override void OnInitialized()
+    {
+        if (ShowCounter)
+        {
+            _activeCounterTimer = new Timer(_ =>
+            {
+                if (_activeCount < 2380)
+                {
+                    var r = new Random();
+                    _activeCount += r.Next(10, 31);
+                    InvokeAsync(StateHasChanged);
+                }
+            }, null, 200, 200);
+        }
+    }
+
+    private void SelectTab(FeaturedProjectTab tab)
+    {
+        _selectedTabKey = tab.TabKey;
+
+        if (HubConnection is not null && HubConnection.State == HubConnectionState.Connected)
+        {
+            _ = HubConnection.SendAsync("BroadcastSystemLog", $"项目模块切换: {Project.Title} - {tab.Label}");
+        }
+    }
+
+    public void Dispose()
+    {
+        _activeCounterTimer?.Dispose();
+    }
+}
