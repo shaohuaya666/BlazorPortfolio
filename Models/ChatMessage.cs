@@ -15,6 +15,21 @@ namespace BlazorPortfolio.Models;
 [Index(nameof(MessageType), nameof(Timestamp))]
 public class ChatMessage : IEntity
 {
+    /// <summary>邮件通知状态：无需发送（非联系消息或历史数据）</summary>
+    public const byte EmailStatusNotRequired = 0;
+
+    /// <summary>邮件通知状态：待发送</summary>
+    public const byte EmailStatusPending = 1;
+
+    /// <summary>邮件通知状态：已发送</summary>
+    public const byte EmailStatusSent = 2;
+
+    /// <summary>邮件通知状态：发送失败（重试耗尽）</summary>
+    public const byte EmailStatusFailed = 3;
+
+    /// <summary>联系表单消息的消息类型值</summary>
+    public const string ContactMessageType = "Contact";
+
     [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
 
@@ -48,4 +63,16 @@ public class ChatMessage : IEntity
 
     /// <summary>消息产生时间</summary>
     public DateTime Timestamp { get; set; }
+
+    /// <summary>
+    /// 邮件通知状态，取值见 EmailStatus* 常量。
+    /// 非联系消息恒为 0；历史联系消息迁移后默认 0（视为无需补发）。
+    /// </summary>
+    public byte EmailStatus { get; set; }
+
+    /// <summary>邮件累计发送尝试次数（含首次尝试）</summary>
+    public int EmailAttempts { get; set; }
+
+    /// <summary>邮件发送成功时间，未发送成功时为 null</summary>
+    public DateTime? EmailNotifiedAt { get; set; }
 }
