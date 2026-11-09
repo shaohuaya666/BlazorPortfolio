@@ -5,6 +5,8 @@ using BlazorPortfolio.Middlewares;
 using BlazorPortfolio.Services;
 using BlazorPortfolio.Services.Impl;
 using BlazorPortfolio.Services.Caching;
+using BlazorPortfolio.Services.Contact;
+using BlazorPortfolio.Services.Email;
 using BlazorPortfolio.Services.VisitTracking;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
@@ -55,8 +57,24 @@ builder.Services.AddSingleton(sp => new CacheService(
 // 注册消息队列服务（Singleton，SignalR Hub 和后台服务共享同一实例）
 builder.Services.AddSingleton<MessageQueueService>();
 
-// 注册消息持久化后台服务（Hosted Service，定时从队列取数据写入数据库）
+// ---- 联系表单邮件通知 ----
+// 绑定邮件配置（appsettings.json 的 "Smtp" 节点；授权码等敏感项由 appsettings.Production.json
+// 或环境变量 Smtp__Password 提供，不入 Git）
+builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection(SmtpOptions.SectionName));
+builder.Services.Configure<ContactFormOptions>(builder.Configuration.GetSection(ContactFormOptions.SectionName));
+
+// 联系表单提交限流（进程内内存实现，按来源 IP 计数）
+builder.Services.AddSingleton<ContactRateLimiter>();
+
+// 邮件通知队列与发送器（SMTP/MailKit）；未配置时后台服务只记日志、不发信
+builder.Services.AddSingleton<EmailQueueService>();
+builder.Services.AddSingleton<IEmailSender, SmtpEmailSender>();
+
+// 注册消息持久化后台服务（Hosted Service，定时从队列取数据写入数据库，并转发邮件通知）
 builder.Services.AddHostedService<MessagePersistService>();
+
+// 注册邮件通知后台服务（Hosted Service，消费邮件队列、发送、重试与状态回写）
+builder.Services.AddHostedService<EmailNotificationService>();
 
 // ---- 访问来源 IP 采集 ----
 // 绑定采集配置（appsettings.json 的 "VisitTracking" 节点，可由环境变量 VisitTracking__xxx 覆盖）
