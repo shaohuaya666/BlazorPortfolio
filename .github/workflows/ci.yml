@@ -37,15 +37,16 @@ jobs:
         image: mysql:8.0
         env:
           MYSQL_ROOT_PASSWORD: root
+          MYSQL_ROOT_HOST: "%"
           MYSQL_DATABASE: portfolio_ci
         ports:
           - 3306:3306
+        # 注意：options 只能是 docker create 的参数，MySQL 服务端参数不能写在这里
         options: >-
           --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot --silent"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=12
-          --default-authentication-plugin=mysql_native_password
 
     steps:
       - name: 拉取代码
