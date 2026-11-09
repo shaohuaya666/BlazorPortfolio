@@ -1,0 +1,5 @@
+# 统一换行符，避免 Windows 下提交的脚本在 Linux CI 中因 CRLF 执行失败
+* text=auto
+*.sh text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf

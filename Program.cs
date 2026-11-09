@@ -149,4 +149,8 @@ app.MapRazorComponents<BlazorPortfolio.App>()
 // 映射 SignalR Hub 端点
 app.MapHub<PortfolioHub>("/portfolioHub");
 
+// 存活探针：仅代表进程已完成启动并能处理请求，不检查数据库/Redis，
+// 供部署后探活与 CI 启动验证使用（路径前缀已在 VisitLoggingMiddleware 中排除）
+app.MapGet("/healthz", () => Results.Ok(new { status = "ok" }));
+
 app.Run();

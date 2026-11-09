@@ -1,0 +1,174 @@
+name: CI
+
+# 合并前校验：所有 PR 都必须通过本工作流
+on:
+  pull_request:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# 同一 PR 的新提交会取消上一次运行，避免重复占用资源
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_VERSION: "8.0.x"
+  NODE_VERSION: "20"
+  DOTNET_NOLOGO: "true"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "true"
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: "true"
+
+jobs:
+  # 单一必检作业：任何一步失败都会使该检查失败，从而阻止合并
+  build-test-smoke:
+    name: build-test-smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      # 启动阶段 ServerVersion.AutoDetect 需要真实可连的 MySQL，这里使用作业内置服务
+      ConnectionStrings__DefaultConnection: "Server=127.0.0.1;Port=3306;Database=portfolio_ci;User=root;Password=root;AllowPublicKeyRetrieval=true;"
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_ROOT_HOST: "%"
+          MYSQL_DATABASE: portfolio_ci
+        ports:
+          - 3306:3306
+        # 注意：options 只能是 docker create 的参数，MySQL 服务端参数不能写在这里
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=12
+
+    steps:
+      - name: 拉取代码
+        uses: actions/checkout@v4
+
+      - name: 安装 .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: 安装 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: 缓存 NuGet 包
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: 缓存 npm 缓存目录
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: npm-${{ runner.os }}-${{ hashFiles('package.json') }}
+          restore-keys: npm-${{ runner.os }}-
+
+      - name: 安装前端依赖
+        id: npm
+        run: npm install --no-audit --no-fund
+
+      - name: 构建 Tailwind CSS
+        id: css
+        run: |
+          npm run build:css
+          test -s wwwroot/css/app.css || { echo "::error title=CSS 构建失败::wwwroot/css/app.css 未生成或为空"; exit 1; }
+
+      - name: 还原 NuGet 依赖
+        id: restore
+        run: dotnet restore BlazorPortfolio.sln
+
+      - name: 编译（Release）
+        id: build
+        run: dotnet build BlazorPortfolio.sln -c Release --no-restore
+
+      - name: 运行单元测试
+        id: test
+        run: >
+          dotnet test BlazorPortfolio.sln -c Release --no-build --no-restore
+          --logger "trx;LogFileName=unit-tests.trx"
+          --results-directory "$RUNNER_TEMP/test-results"
+
+      - name: 发布应用
+        id: publish
+        run: dotnet publish BlazorPortfolio.csproj -c Release --no-build --no-restore -o "$RUNNER_TEMP/publish"
+
+      - name: 启动冒烟验证
+        id: smoke
+        env:
+          ASPNETCORE_ENVIRONMENT: Development
+          Kestrel__Endpoints__Http__Url: http://127.0.0.1:5099
+          APP_BASE_URL: http://127.0.0.1:5099
+          VisitTracking__Enabled: "false"
+          SMOKE_ARTIFACT_DIR: ${{ runner.temp }}/smoke-test
+        run: bash scripts/ci/smoke-test.sh "$RUNNER_TEMP/publish"
+
+      - name: 上传测试结果与启动日志
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-artifacts-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/test-results
+            ${{ runner.temp }}/smoke-test
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: 写入 CI 结果摘要
+        if: always()
+        env:
+          NPM: ${{ steps.npm.outcome }}
+          CSS: ${{ steps.css.outcome }}
+          RESTORE: ${{ steps.restore.outcome }}
+          BUILD: ${{ steps.build.outcome }}
+          TEST: ${{ steps.test.outcome }}
+          PUBLISH: ${{ steps.publish.outcome }}
+          SMOKE: ${{ steps.smoke.outcome }}
+        run: |
+          status_text() {
+            case "$1" in
+              success) echo "✅ 通过" ;;
+              skipped | "") echo "⏭️ 未执行" ;;
+              cancelled) echo "⏹️ 已取消" ;;
+              *) echo "❌ 失败" ;;
+            esac
+          }
+
+          if [[ "${{ job.status }}" == "success" ]]; then
+            echo "## ✅ CI 全部通过" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "## ❌ CI 未通过：禁止合并" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "失败原因见下表标记为 ❌ 的环节；展开对应步骤可查看完整错误输出，应用启动日志见 artifact \`ci-artifacts-${{ github.run_id }}\`。" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          {
+            echo ""
+            echo "| 检查环节 | 结果 |"
+            echo "| --- | --- |"
+            echo "| 前端依赖安装 | $(status_text "$NPM") |"
+            echo "| Tailwind CSS 构建 | $(status_text "$CSS") |"
+            echo "| NuGet 依赖还原 | $(status_text "$RESTORE") |"
+            echo "| Release 编译 | $(status_text "$BUILD") |"
+            echo "| 单元测试 | $(status_text "$TEST") |"
+            echo "| 发布产物 | $(status_text "$PUBLISH") |"
+            echo "| 启动冒烟验证 | $(status_text "$SMOKE") |"
+            echo ""
+            echo "> 提交：\`${{ github.sha }}\` ｜ 触发：\`${{ github.event_name }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: 失败提示
+        if: failure()
+        run: echo "::error title=CI 检查未通过::合并已被阻止，请按 Job Summary 中标记为失败的环节定位问题后重新推送。"

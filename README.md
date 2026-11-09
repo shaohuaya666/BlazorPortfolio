@@ -107,6 +107,39 @@ dotnet watch run
 
 使用 `watch` 命令可以在文件修改后自动重新编译和重启应用。
 
+## 🔄 持续集成（CI）
+
+CI 配置位于 `.github/workflows/ci.yml`，在每次 Pull Request 以及推送 `main` / `master` 时自动运行，任一环节失败即判定检查不通过：
+
+| 环节 | 命令 / 说明 |
+| --- | --- |
+| 前端依赖安装 | `npm install --no-audit --no-fund` |
+| Tailwind CSS 构建 | `npm run build:css`，并校验 `wwwroot/css/app.css` 非空 |
+| NuGet 依赖还原 | `dotnet restore BlazorPortfolio.sln` |
+| Release 编译 | `dotnet build BlazorPortfolio.sln -c Release --no-restore` |
+| 单元测试 | `dotnet test BlazorPortfolio.sln -c Release --no-build` |
+| 发布 | `dotnet publish BlazorPortfolio.csproj -c Release -o publish` |
+| 启动验证 | `bash scripts/ci/smoke-test.sh publish` |
+
+启动验证以 CI 内置的 MySQL 服务为依赖运行发布产物：轮询 `/healthz` 探活，检查 Tailwind 样式产物、Razor 页面渲染与 SignalR 协商端点，最后确认进程持续存活并能优雅退出。失败时打印应用日志并上传 `ci-artifacts-<run_id>`，同时在 Job Summary 中给出各环节结果。
+
+本地复现完整流程（需本机已启动 MySQL、Node.js）：
+
+```bash
+npm install && npm run build:css
+dotnet restore && dotnet build -c Release
+dotnet test -c Release --no-build
+dotnet publish -c Release -o publish
+# Git Bash / Linux / macOS
+Kestrel__Endpoints__Http__Url=http://127.0.0.1:5099 bash scripts/ci/smoke-test.sh publish
+```
+
+### 合并保护（阻止合并）
+
+在 GitHub 仓库 Settings → Branches 中为默认分支添加分支规则，勾选 **Require status checks to pass before merging**，并把必需检查设为 `build-test-smoke`（建议同时开启 **Require branches to be up to date before merging**）。配置完成后，检查失败或未运行的 PR 将无法合并。
+
+> 必检状态若使用 `paths` 过滤，跳过时检查会一直处于 Pending 导致无法合并，因此工作流未做路径过滤；重复推送由 `concurrency` 自动取消旧运行。
+
 ## 🔧 配置说明
 
 ### 数据库连接
