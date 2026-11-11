@@ -37,6 +37,19 @@
         <ContactSection TraceLogs="traceLogs" ShowSuccessMsg="showSuccessMsg" />
     </main>
 
+    <footer class="border-t border-slate-800/60 mt-8">
+        <div class="max-w-7xl mx-auto px-6 py-8">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-3 font-mono text-[11px] sm:text-xs text-slate-500 text-center sm:text-left">
+                <p class="leading-relaxed">© @DateTime.Now.Year · 保留所有权利</p>
+                <p class="flex flex-wrap items-center justify-center gap-2 leading-relaxed">
+                    <span>备案号：</span>
+                    <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer"
+                       class="text-slate-400 hover:text-[#4fdbc8] transition-colors duration-300 no-underline break-all">浙ICP备2026096796号-1</a>
+                </p>
+            </div>
+        </div>
+    </footer>
+
     <ResumeModal IsOpen="resumeModalOpen" OnClose="ToggleResumeModal" />
 </CascadingValue>
 
