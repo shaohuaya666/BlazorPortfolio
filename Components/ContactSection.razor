@@ -33,7 +33,7 @@
                 @if (ShowSuccessMsg)
                 {
                     <div class="p-3 bg-[#4fdbc8]/15 border border-[#4fdbc8]/30 rounded text-xs text-[#4fdbc8] font-mono animate-pulse">
-                        ✓ 发送成功: 消息已通过 SignalR 实时传输 - 所有连接客户端已收到通知
+                        ✓ 发送成功: 消息已通过 SignalR 实时传输 - 已推送至实时日志订阅者
                     </div>
                 }
 
@@ -55,7 +55,14 @@
         <div class="lg:col-span-5 glass-card p-6 rounded-xl flex flex-col justify-between min-h-[220px]">
             <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-2 font-mono">
                 <span class="text-xs text-slate-300">SignalR消息</span>
-                <span class="w-2 h-2 bg-green-500 rounded-full animate-ping"></span>
+                <div class="flex items-center gap-2">
+                    <button type="button" @onclick="ToggleLiveLog"
+                            title="@(LiveLogEnabled ? "关闭后本页不再接收其他访客操作产生的日志" : "开启后接收全站实时日志，本页渲染开销随之增加")"
+                            class="text-[10px] px-2 py-0.5 rounded border transition-colors cursor-pointer @(LiveLogEnabled ? "border-[#4fdbc8]/60 text-[#4fdbc8]" : "border-slate-700 text-slate-500 hover:text-slate-300 hover:border-slate-500")">
+                        @(LiveLogEnabled ? "订阅中" : "订阅")
+                    </button>
+                    <span class="@(LiveLogEnabled ? "w-2 h-2 bg-green-500 rounded-full animate-ping" : "w-2 h-2 bg-slate-600 rounded-full")"></span>
+                </div>
             </div>
             <div class="font-mono text-[10px] text-slate-400 space-y-1.5 flex-grow">
                 @if (TraceLogs.Count == 0)
@@ -85,12 +92,29 @@
     public bool ShowSuccessMsg { get; set; }
 
     /// <summary>
+    /// 当前是否订阅了实时日志（由父组件维护）
+    /// </summary>
+    [Parameter]
+    public bool LiveLogEnabled { get; set; }
+
+    /// <summary>
+    /// 实时日志订阅开关回调，参数为切换后的目标状态
+    /// </summary>
+    [Parameter]
+    public EventCallback<bool> OnLiveLogToggle { get; set; }
+
+    /// <summary>
     /// SignalR 连接（由父组件通过 CascadingValue 传入，用于发送消息）
     /// </summary>
     [CascadingParameter]
     public HubConnection? HubConnection { get; set; }
 
     private ContactForm _contactForm = new();
+
+    /// <summary>
+    /// 切换实时日志订阅（交由父组件向 Hub 发送订阅/退订指令）
+    /// </summary>
+    private Task ToggleLiveLog() => OnLiveLogToggle.InvokeAsync(!LiveLogEnabled);
 
     private async Task HandleContactSubmit()
     {

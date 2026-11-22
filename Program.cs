@@ -7,6 +7,7 @@ using BlazorPortfolio.Services.Impl;
 using BlazorPortfolio.Services.Caching;
 using BlazorPortfolio.Services.Contact;
 using BlazorPortfolio.Services.Email;
+using BlazorPortfolio.Services.Realtime;
 using BlazorPortfolio.Services.VisitTracking;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
@@ -65,6 +66,11 @@ builder.Services.Configure<ContactFormOptions>(builder.Configuration.GetSection(
 
 // 联系表单提交限流（进程内内存实现，按来源 IP 计数）
 builder.Services.AddSingleton<ContactRateLimiter>();
+
+// ---- 系统日志推送的校验与限流 ----
+// 与联系表单限流相互独立：日志调用不消耗表单提交额度；阈值由 appsettings.json 的 "HubLog" 节点配置
+builder.Services.Configure<HubLogOptions>(builder.Configuration.GetSection(HubLogOptions.SectionName));
+builder.Services.AddSingleton<HubLogRateLimiter>();
 
 // 邮件通知队列与发送器（SMTP/MailKit）；未配置时后台服务只记日志、不发信
 builder.Services.AddSingleton<EmailQueueService>();
