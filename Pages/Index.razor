@@ -34,7 +34,8 @@
 
         <ProjectsSection Items="compactProjects" FeaturedProjects="featuredProjects" />
 
-        <ContactSection TraceLogs="traceLogs" ShowSuccessMsg="showSuccessMsg" />
+        <ContactSection TraceLogs="traceLogs" ShowSuccessMsg="showSuccessMsg"
+                        LiveLogEnabled="liveLogEnabled" OnLiveLogToggle="ToggleLiveLog" />
     </main>
 
     <footer class="border-t border-slate-800/60 mt-8">
@@ -68,6 +69,11 @@
     /// 是否显示提交成功消息
     /// </summary>
     private bool showSuccessMsg = false;
+
+    /// <summary>
+    /// 是否订阅了服务端实时日志：默认关闭，未订阅的页面不会被他人操作触发重渲染
+    /// </summary>
+    private bool liveLogEnabled = false;
 
     /// <summary>
     /// 简历模态框是否打开
@@ -133,6 +139,7 @@
             InvokeAsync(StateHasChanged);
         });
 
+        // 仅在订阅实时日志后才会收到：订阅者收到全量，未订阅者只收到自己操作的回显
         hubConnection.On<string>("ReceiveSystemLog", (log) =>
         {
             traceLogs.Add(log);
@@ -155,6 +162,24 @@
             });
         });
 
+        // 重连后服务端组关系会丢失，需要按当前开关状态重新订阅
+        hubConnection.Reconnected += async _ =>
+        {
+            if (liveLogEnabled)
+            {
+                try
+                {
+                    await hubConnection.SendAsync("SubscribeSystemLog");
+                }
+                catch (Exception ex)
+                {
+                    AddLog($"实时日志重新订阅失败: {ex.Message}");
+                }
+            }
+
+            await InvokeAsync(StateHasChanged);
+        };
+
         // 启动 SignalR 连接
         try
         {
@@ -175,6 +200,32 @@
     private void ToggleResumeModal()
     {
         resumeModalOpen = !resumeModalOpen;
+    }
+
+    /// <summary>
+    /// 切换实时日志订阅：开启后本页会接收他人操作产生的日志（整页重渲染，渲染开销随之增加）；
+    /// 默认关闭，保证任一访客的操作不会触发其他访客页面重渲染。
+    /// </summary>
+    private async Task ToggleLiveLog(bool enabled)
+    {
+        if (hubConnection is null || hubConnection.State != HubConnectionState.Connected)
+        {
+            liveLogEnabled = false;
+            AddLog("SignalR 未连接，无法切换实时日志订阅。");
+            return;
+        }
+
+        try
+        {
+            await hubConnection.SendAsync(enabled ? "SubscribeSystemLog" : "UnsubscribeSystemLog");
+            liveLogEnabled = enabled;
+            AddLog(enabled ? "已订阅实时日志，后续推送仅本页接收。" : "已取消实时日志订阅。");
+        }
+        catch (Exception ex)
+        {
+            liveLogEnabled = false;
+            AddLog($"实时日志订阅切换失败: {ex.Message}");
+        }
     }
 
     /// <summary>
